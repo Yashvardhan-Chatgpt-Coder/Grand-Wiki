@@ -16,6 +16,11 @@ dist-ssr
 .nitro
 *.local
 
+# Local launcher
+start-esportific.bat
+Seed Scripts/
+Excel Formats/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

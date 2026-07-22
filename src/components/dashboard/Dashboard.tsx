@@ -1,246 +1,233 @@
+import { useEffect } from "react";
+import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
-  ArrowUpRight,
-  Plus,
-  Trophy,
-  Users,
-  Swords,
-  Activity,
-  Crown,
-  Target,
-  Zap,
-  Download,
-  MoreHorizontal,
-  Circle,
+  Info,
+  Heart,
+  BookOpen,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PhilanthropistListItem } from "@/components/dashboard/PhilanthropistListItem";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatDonationAmount, formatServerNames } from "@/lib/philanthropists";
+import { getFirstName, getIndianTimeGreeting } from "@/lib/utils";
+import { donationsApi } from "@/lib/api";
 
-const stats = [
-  { label: "Active Tournaments", value: "07", delta: "+2", icon: Swords },
-  { label: "Registered Teams", value: "184", delta: "+12", icon: Users },
-  { label: "Matches Played", value: "1,294", delta: "+38", icon: Activity },
-  { label: "Points Awarded", value: "47,820", delta: "+1.2k", icon: Target },
-];
-
-const tournaments = [
-  { name: "Apex Legends Pro Cup S4", game: "Apex Legends", teams: 32, status: "LIVE", round: "Grand Final", progress: 86 },
-  { name: "Valorant Champions Series", game: "Valorant", teams: 24, status: "ONGOING", round: "Round 5 / 8", progress: 62 },
-  { name: "BGMI Showdown – Season 2", game: "BGMI", teams: 48, status: "ONGOING", round: "Round 2 / 6", progress: 33 },
-  { name: "CS2 Strike Invitational", game: "Counter-Strike 2", teams: 16, status: "DRAFT", round: "Setup", progress: 8 },
-];
-
-const leaderboard = [
-  { rank: 1, team: "Vortex Kings", kills: 142, placement: 9, points: 312 },
-  { rank: 2, team: "Nova Syndicate", kills: 128, placement: 8, points: 298 },
-  { rank: 3, team: "Iron Wolves", kills: 119, placement: 7, points: 271 },
-  { rank: 4, team: "Phantom Six", kills: 108, placement: 6, points: 244 },
-  { rank: 5, team: "Eclipse Order", kills: 97, placement: 5, points: 219 },
-];
-
-function StatCard({ s }: { s: (typeof stats)[number] }) {
-  const Icon = s.icon;
-  return (
-    <div className="corner-bracket relative border border-border bg-card p-5">
-      <div className="flex items-start justify-between">
-        <span className="mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          {s.label}
-        </span>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="mt-4 flex items-end justify-between">
-        <span className="mono text-3xl font-semibold tracking-tight">{s.value}</span>
-        <span className="mono text-[11px] text-foreground/80">{s.delta} ▲</span>
-      </div>
-    </div>
-  );
+interface WhatsNewItem {
+  id: string;
+  tag: string;
+  title: string;
+  description: string;
+  time: string;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const live = status === "LIVE";
-  const draft = status === "DRAFT";
-  return (
-    <span
-      className={`mono inline-flex items-center gap-1.5 border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] ${
-        live
-          ? "border-foreground bg-foreground text-background"
-          : draft
-            ? "border-border text-muted-foreground"
-            : "border-border text-foreground"
-      }`}
-    >
-      {live && <Circle className="h-1.5 w-1.5 fill-current" />}
-      {status}
-    </span>
-  );
+interface GuideCard {
+  id: string;
+  title: string;
+  image: string;
 }
+
+const GUIDES: GuideCard[] = [
+  {
+    id: "how-to-process-a-10-15",
+    title: "How To Process A 10-15",
+    image: "/Guides/How to arrest a 10-15.png"
+  }
+  // Add more guides here as they're created
+];
 
 export function Dashboard() {
+  const { displayName } = useCurrentUser();
+  const greeting = getIndianTimeGreeting();
+  const firstName = getFirstName(displayName);
+
+  const [topPhilanthropists, setTopPhilanthropists] = useState<Array<{
+    id: string;
+    rank: number;
+    name: string;
+    server: string;
+    amountLabel: string;
+  }>>([]);
+
+  useEffect(() => {
+    donationsApi.getPublic().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        const map = new Map<string, { id: string; name: string; amount: number; servers: string[] }>();
+
+        data.forEach((d) => {
+          const key = (d.name || "").trim();
+          if (!key) return;
+          const amt = Number(d.amount) || 0;
+
+          const existing = map.get(key);
+          if (existing) {
+            existing.amount += amt;
+            if (d.server) existing.servers.push(d.server);
+          } else {
+            map.set(key, {
+              id: d._id || d.id,
+              name: key,
+              amount: amt,
+              servers: d.server ? [d.server] : ["EN1"]
+            });
+          }
+        });
+
+        const sorted = Array.from(map.values())
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 5)
+          .map((item, idx) => ({
+            id: item.id,
+            rank: idx + 1,
+            name: item.name,
+            server: formatServerNames(item.servers),
+            amountLabel: formatDonationAmount(item.amount)
+          }));
+
+        setTopPhilanthropists(sorted);
+      }
+    }).catch((err) => {
+      console.error(err);
+    });
+  }, []);
+
+  // Professional updates list
+  const [whatsNewList] = useState<WhatsNewItem[]>([
+    {
+      id: "1",
+      tag: "TOOL",
+      title: "Vehicle Ticketing Tool",
+      description: "Complete vehicle ticketing system with tax multipliers and penalty points tracking.",
+      time: "Today"
+    },
+    {
+      id: "2",
+      tag: "GUIDE",
+      title: "Patrolman's Guide",
+      description: "Essential patrol procedures, radio codes, and field operations handbook.",
+      time: "Today"
+    },
+    {
+      id: "3",
+      tag: "REFERENCE",
+      title: "Department Radio",
+      description: "Official radio frequencies and communication protocols for all departments.",
+      time: "Today"
+    }
+  ]);
+
   return (
-    <div className="relative min-h-full">
-      <div className="absolute inset-0 grid-bg pointer-events-none opacity-60" />
+    <div className="mx-auto max-w-[1200px] space-y-6 p-8">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-[24px] font-semibold tracking-tight text-[#000000]">
+          {greeting}, {firstName}
+        </h1>
+        <p className="mt-1 text-[13px] text-[#666666]">
+          Unified wiki database and operational utility console
+        </p>
+      </div>
 
-      <div className="relative space-y-8 p-6 md:p-8">
-        {/* Header */}
-        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column: Featured & What's New */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Guides Section */}
           <div>
-            <div className="mono flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-              <span className="inline-block h-1.5 w-1.5 bg-foreground" />
-              Organizer Console / Overview
-            </div>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
-              Good evening, Commander.
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              4 tournaments running tonight · next match check-in in 00:42:18
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="rounded-none border-border bg-transparent">
-              <Download className="mr-2 h-4 w-4" /> Export
-            </Button>
-            <Button className="rounded-none bg-foreground text-background hover:bg-foreground/90">
-              <Plus className="mr-2 h-4 w-4" /> New Tournament
-            </Button>
-          </div>
-        </header>
-
-        {/* Stats */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {stats.map((s) => (
-            <StatCard key={s.label} s={s} />
-          ))}
-        </section>
-
-        <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          {/* Tournaments */}
-          <div className="xl:col-span-2 border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-5 py-3">
-              <div className="flex items-center gap-2">
-                <Swords className="h-4 w-4" />
-                <h2 className="mono text-xs uppercase tracking-[0.25em]">Active Tournaments</h2>
-              </div>
-              <Button variant="ghost" size="sm" className="rounded-none mono text-[11px] uppercase tracking-widest">
-                View all <ArrowUpRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-
-            <div className="divide-y divide-border">
-              {tournaments.map((t) => (
-                <div key={t.name} className="group grid grid-cols-12 items-center gap-4 px-5 py-4 hover:bg-accent/40">
-                  <div className="col-span-12 md:col-span-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center border border-border bg-background">
-                        <Zap className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{t.name}</div>
-                        <div className="mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          {t.game} · {t.teams} teams
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="col-span-6 md:col-span-2">
-                    <StatusBadge status={t.status} />
-                  </div>
-
-                  <div className="col-span-6 md:col-span-4">
-                    <div className="flex items-center justify-between">
-                      <span className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {t.round}
-                      </span>
-                      <span className="mono text-[10px] text-muted-foreground">{t.progress}%</span>
-                    </div>
-                    <div className="mt-2 h-[3px] w-full bg-muted">
-                      <div
-                        className="h-full bg-foreground transition-all"
-                        style={{ width: `${t.progress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="col-span-12 md:col-span-1 flex justify-end">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-none">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Leaderboard */}
-          <div className="border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-5 py-3">
-              <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4" />
-                <h2 className="mono text-xs uppercase tracking-[0.25em]">Top Squads</h2>
-              </div>
-              <span className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                Apex S4
-              </span>
-            </div>
-
-            <div className="px-5 py-2">
-              <div className="mono grid grid-cols-12 gap-2 border-b border-border py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                <span className="col-span-1">#</span>
-                <span className="col-span-5">Team</span>
-                <span className="col-span-2 text-right">K</span>
-                <span className="col-span-2 text-right">PL</span>
-                <span className="col-span-2 text-right">PTS</span>
-              </div>
-              {leaderboard.map((r) => (
-                <div
-                  key={r.team}
-                  className="grid grid-cols-12 items-center gap-2 border-b border-border/60 py-3 text-sm last:border-b-0"
+            <div className="grid gap-4 grid-cols-1">
+              {GUIDES.slice(0, 5).map((guide) => (
+                <Link
+                  key={guide.id}
+                  to={`/guides/${guide.id}`}
+                  className="group relative h-[280px] overflow-hidden rounded-[10px] border border-[#e2e5ec]"
                 >
-                  <span className="mono col-span-1 flex items-center gap-1 text-muted-foreground">
-                    {r.rank === 1 ? (
-                      <Crown className="h-3.5 w-3.5 text-foreground" />
-                    ) : (
-                      <span className="text-foreground">{r.rank}</span>
-                    )}
-                  </span>
-                  <span className="col-span-5 truncate font-medium">{r.team}</span>
-                  <span className="mono col-span-2 text-right">{r.kills}</span>
-                  <span className="mono col-span-2 text-right">{r.placement}</span>
-                  <span className="mono col-span-2 text-right font-semibold">{r.points}</span>
+                  <img
+                    src={guide.image}
+                    alt={guide.title}
+                    className="h-full w-full object-cover"
+                  />
+                  {/* White overlay on hover */}
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+                  {/* Black gradient (always visible) */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0c0d12]/95 via-[#0c0d12]/60 to-transparent p-6 pt-16">
+                    <h2 className="text-[20px] font-bold text-white tracking-tight">
+                      {guide.title}
+                    </h2>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* What's New */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-[#000000]" />
+              <h2 className="text-[15px] font-semibold text-[#000000]">What's New</h2>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              {whatsNewList.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-col rounded-[8px] border border-[#e2e5ec] bg-white p-4 transition-all hover:bg-[#f7f8fb]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="inline-block rounded-[3px] bg-[#f0f1f3] px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[#4b5563]">
+                      {item.tag}
+                    </span>
+                    <span className="text-[10px] text-[#8a90a0]">{item.time}</span>
+                  </div>
+
+                  <h3 className="mt-3 text-[13px] font-bold text-[#000000] leading-snug line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 flex-1 text-[12px] text-[#666666] leading-relaxed line-clamp-3">
+                    {item.description}
+                  </p>
                 </div>
               ))}
             </div>
-
-            <div className="border-t border-border p-4">
-              <Button variant="outline" className="w-full rounded-none border-border bg-transparent mono text-[11px] uppercase tracking-widest">
-                <Download className="mr-2 h-3.5 w-3.5" />
-                Export Leaderboard
-              </Button>
-            </div>
           </div>
-        </section>
+        </div>
 
-        {/* Quick actions */}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {[
-            { title: "Create Point Table", desc: "Set kill points, placement multipliers and bonus rules.", icon: Target },
-            { title: "Import Match Results", desc: "Paste lobby results or upload a CSV — we'll compute the rest.", icon: Activity },
-            { title: "Publish Leaderboard", desc: "Generate a shareable link or push to overlay.", icon: Trophy },
-          ].map((a) => {
-            const Icon = a.icon;
-            return (
-              <button
-                key={a.title}
-                className="group relative border border-border bg-card p-5 text-left transition-colors hover:border-foreground"
-              >
-                <div className="flex items-start justify-between">
-                  <Icon className="h-5 w-5" />
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
-                </div>
-                <div className="mt-6 text-sm font-semibold">{a.title}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{a.desc}</div>
-              </button>
-            );
-          })}
-        </section>
+        {/* Right Column: Top Philanthropists */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+              <h2 className="text-[15px] font-semibold text-[#000000]">Top Philanthropists</h2>
+            </div>
+            <Link
+              to="/philanthropists"
+              className="text-[12px] font-medium text-[#666666] hover:text-[#000000] cursor-pointer"
+            >
+              View All
+            </Link>
+          </div>
+
+          <div className="rounded-[10px] border border-[#e2e5ec] bg-white p-5 space-y-3">
+            {topPhilanthropists.length > 0 ? (
+              topPhilanthropists.map((item, idx) => (
+                <PhilanthropistListItem
+                  key={item.id}
+                  rank={item.rank}
+                  name={item.name}
+                  server={item.server}
+                  amountLabel={item.amountLabel}
+                  showDivider={idx !== topPhilanthropists.length - 1}
+                />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Heart className="h-10 w-10 text-[#e5e7eb] mb-3" />
+                <p className="text-[13px] font-medium text-[#000000]">No donations yet</p>
+                <p className="mt-1 text-[12px] text-[#9aa1b0]">
+                  Be the first to support Grand Wiki
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -9,38 +9,314 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VehicleTicketingRouteImport } from './routes/vehicle-ticketing'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as QnaRouteImport } from './routes/qna'
+import { Route as PinnedCommandsRouteImport } from './routes/pinned-commands'
+import { Route as PhilanthropistsRouteImport } from './routes/philanthropists'
+import { Route as PatrolmansGuideRouteImport } from './routes/patrolmans-guide'
+import { Route as OrganizationsRouteImport } from './routes/organizations'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as IntroductionRouteImport } from './routes/introduction'
+import { Route as GuidesRouteImport } from './routes/guides'
+import { Route as DepartmentRadioRouteImport } from './routes/department-radio'
+import { Route as ArrestProcedureRouteImport } from './routes/arrest-procedure'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GuidesGuideIdRouteImport } from './routes/guides.$guideId'
 
+const VehicleTicketingRoute = VehicleTicketingRouteImport.update({
+  id: '/vehicle-ticketing',
+  path: '/vehicle-ticketing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QnaRoute = QnaRouteImport.update({
+  id: '/qna',
+  path: '/qna',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PinnedCommandsRoute = PinnedCommandsRouteImport.update({
+  id: '/pinned-commands',
+  path: '/pinned-commands',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhilanthropistsRoute = PhilanthropistsRouteImport.update({
+  id: '/philanthropists',
+  path: '/philanthropists',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatrolmansGuideRoute = PatrolmansGuideRouteImport.update({
+  id: '/patrolmans-guide',
+  path: '/patrolmans-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsRoute = OrganizationsRouteImport.update({
+  id: '/organizations',
+  path: '/organizations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntroductionRoute = IntroductionRouteImport.update({
+  id: '/introduction',
+  path: '/introduction',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepartmentRadioRoute = DepartmentRadioRouteImport.update({
+  id: '/department-radio',
+  path: '/department-radio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArrestProcedureRoute = ArrestProcedureRouteImport.update({
+  id: '/arrest-procedure',
+  path: '/arrest-procedure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesGuideIdRoute = GuidesGuideIdRouteImport.update({
+  id: '/$guideId',
+  path: '/$guideId',
+  getParentRoute: () => GuidesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/arrest-procedure': typeof ArrestProcedureRoute
+  '/department-radio': typeof DepartmentRadioRoute
+  '/guides': typeof GuidesRouteWithChildren
+  '/introduction': typeof IntroductionRoute
+  '/login': typeof LoginRoute
+  '/organizations': typeof OrganizationsRoute
+  '/patrolmans-guide': typeof PatrolmansGuideRoute
+  '/philanthropists': typeof PhilanthropistsRoute
+  '/pinned-commands': typeof PinnedCommandsRoute
+  '/qna': typeof QnaRoute
+  '/signup': typeof SignupRoute
+  '/vehicle-ticketing': typeof VehicleTicketingRoute
+  '/guides/$guideId': typeof GuidesGuideIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/arrest-procedure': typeof ArrestProcedureRoute
+  '/department-radio': typeof DepartmentRadioRoute
+  '/guides': typeof GuidesRouteWithChildren
+  '/introduction': typeof IntroductionRoute
+  '/login': typeof LoginRoute
+  '/organizations': typeof OrganizationsRoute
+  '/patrolmans-guide': typeof PatrolmansGuideRoute
+  '/philanthropists': typeof PhilanthropistsRoute
+  '/pinned-commands': typeof PinnedCommandsRoute
+  '/qna': typeof QnaRoute
+  '/signup': typeof SignupRoute
+  '/vehicle-ticketing': typeof VehicleTicketingRoute
+  '/guides/$guideId': typeof GuidesGuideIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/arrest-procedure': typeof ArrestProcedureRoute
+  '/department-radio': typeof DepartmentRadioRoute
+  '/guides': typeof GuidesRouteWithChildren
+  '/introduction': typeof IntroductionRoute
+  '/login': typeof LoginRoute
+  '/organizations': typeof OrganizationsRoute
+  '/patrolmans-guide': typeof PatrolmansGuideRoute
+  '/philanthropists': typeof PhilanthropistsRoute
+  '/pinned-commands': typeof PinnedCommandsRoute
+  '/qna': typeof QnaRoute
+  '/signup': typeof SignupRoute
+  '/vehicle-ticketing': typeof VehicleTicketingRoute
+  '/guides/$guideId': typeof GuidesGuideIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/arrest-procedure'
+    | '/department-radio'
+    | '/guides'
+    | '/introduction'
+    | '/login'
+    | '/organizations'
+    | '/patrolmans-guide'
+    | '/philanthropists'
+    | '/pinned-commands'
+    | '/qna'
+    | '/signup'
+    | '/vehicle-ticketing'
+    | '/guides/$guideId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/arrest-procedure'
+    | '/department-radio'
+    | '/guides'
+    | '/introduction'
+    | '/login'
+    | '/organizations'
+    | '/patrolmans-guide'
+    | '/philanthropists'
+    | '/pinned-commands'
+    | '/qna'
+    | '/signup'
+    | '/vehicle-ticketing'
+    | '/guides/$guideId'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/arrest-procedure'
+    | '/department-radio'
+    | '/guides'
+    | '/introduction'
+    | '/login'
+    | '/organizations'
+    | '/patrolmans-guide'
+    | '/philanthropists'
+    | '/pinned-commands'
+    | '/qna'
+    | '/signup'
+    | '/vehicle-ticketing'
+    | '/guides/$guideId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ArrestProcedureRoute: typeof ArrestProcedureRoute
+  DepartmentRadioRoute: typeof DepartmentRadioRoute
+  GuidesRoute: typeof GuidesRouteWithChildren
+  IntroductionRoute: typeof IntroductionRoute
+  LoginRoute: typeof LoginRoute
+  OrganizationsRoute: typeof OrganizationsRoute
+  PatrolmansGuideRoute: typeof PatrolmansGuideRoute
+  PhilanthropistsRoute: typeof PhilanthropistsRoute
+  PinnedCommandsRoute: typeof PinnedCommandsRoute
+  QnaRoute: typeof QnaRoute
+  SignupRoute: typeof SignupRoute
+  VehicleTicketingRoute: typeof VehicleTicketingRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vehicle-ticketing': {
+      id: '/vehicle-ticketing'
+      path: '/vehicle-ticketing'
+      fullPath: '/vehicle-ticketing'
+      preLoaderRoute: typeof VehicleTicketingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qna': {
+      id: '/qna'
+      path: '/qna'
+      fullPath: '/qna'
+      preLoaderRoute: typeof QnaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pinned-commands': {
+      id: '/pinned-commands'
+      path: '/pinned-commands'
+      fullPath: '/pinned-commands'
+      preLoaderRoute: typeof PinnedCommandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/philanthropists': {
+      id: '/philanthropists'
+      path: '/philanthropists'
+      fullPath: '/philanthropists'
+      preLoaderRoute: typeof PhilanthropistsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patrolmans-guide': {
+      id: '/patrolmans-guide'
+      path: '/patrolmans-guide'
+      fullPath: '/patrolmans-guide'
+      preLoaderRoute: typeof PatrolmansGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizations': {
+      id: '/organizations'
+      path: '/organizations'
+      fullPath: '/organizations'
+      preLoaderRoute: typeof OrganizationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/introduction': {
+      id: '/introduction'
+      path: '/introduction'
+      fullPath: '/introduction'
+      preLoaderRoute: typeof IntroductionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/department-radio': {
+      id: '/department-radio'
+      path: '/department-radio'
+      fullPath: '/department-radio'
+      preLoaderRoute: typeof DepartmentRadioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arrest-procedure': {
+      id: '/arrest-procedure'
+      path: '/arrest-procedure'
+      fullPath: '/arrest-procedure'
+      preLoaderRoute: typeof ArrestProcedureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +324,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guides/$guideId': {
+      id: '/guides/$guideId'
+      path: '/$guideId'
+      fullPath: '/guides/$guideId'
+      preLoaderRoute: typeof GuidesGuideIdRouteImport
+      parentRoute: typeof GuidesRoute
+    }
   }
 }
 
+interface GuidesRouteChildren {
+  GuidesGuideIdRoute: typeof GuidesGuideIdRoute
+}
+
+const GuidesRouteChildren: GuidesRouteChildren = {
+  GuidesGuideIdRoute: GuidesGuideIdRoute,
+}
+
+const GuidesRouteWithChildren =
+  GuidesRoute._addFileChildren(GuidesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ArrestProcedureRoute: ArrestProcedureRoute,
+  DepartmentRadioRoute: DepartmentRadioRoute,
+  GuidesRoute: GuidesRouteWithChildren,
+  IntroductionRoute: IntroductionRoute,
+  LoginRoute: LoginRoute,
+  OrganizationsRoute: OrganizationsRoute,
+  PatrolmansGuideRoute: PatrolmansGuideRoute,
+  PhilanthropistsRoute: PhilanthropistsRoute,
+  PinnedCommandsRoute: PinnedCommandsRoute,
+  QnaRoute: QnaRoute,
+  SignupRoute: SignupRoute,
+  VehicleTicketingRoute: VehicleTicketingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

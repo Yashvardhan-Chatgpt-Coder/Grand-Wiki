@@ -12,4 +12,26 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      cssMinify: true,
+      minify: "esbuild",
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            // Split heavy third-party node_modules dependencies into separate vendor chunks for maximum browser caching efficiency
+            if (id.includes("node_modules")) {
+              if (id.includes("react") || id.includes("scheduler")) {
+                return "vendor-react";
+              }
+              if (id.includes("lucide") || id.includes("@radix-ui")) {
+                return "vendor-ui";
+              }
+              return "vendor-core";
+            }
+          },
+        },
+      },
+    },
+  },
 });
