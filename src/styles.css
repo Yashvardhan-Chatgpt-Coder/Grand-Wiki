@@ -611,7 +611,7 @@ html.dark [class~="active:bg-[#f3f4f6]"]:active {
 }
 
 html.dark [class~="disabled:bg-[#f7f8fb]"]:disabled {
-  background-color: #131416 !disabled !important;
+  background-color: #131416 !important;
 }
 
 /* ——— Text (default options color: #888991, hover text: #ffffff) ——— */

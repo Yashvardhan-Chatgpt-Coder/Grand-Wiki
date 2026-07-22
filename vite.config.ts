@@ -5,6 +5,7 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { nitro } from "nitro/vite";
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
@@ -13,25 +14,10 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: [nitro()],
     build: {
       cssMinify: true,
       minify: "esbuild",
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            // Split heavy third-party node_modules dependencies into separate vendor chunks for maximum browser caching efficiency
-            if (id.includes("node_modules")) {
-              if (id.includes("react") || id.includes("scheduler")) {
-                return "vendor-react";
-              }
-              if (id.includes("lucide") || id.includes("@radix-ui")) {
-                return "vendor-ui";
-              }
-              return "vendor-core";
-            }
-          },
-        },
-      },
     },
   },
 });
