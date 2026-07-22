@@ -34,7 +34,12 @@ router.post("/send-otp", async (req, res, next) => {
 
     await OtpVerification.deleteMany({ email });
     await OtpVerification.create({ email, otp, expiresAt });
-    await sendOtpEmail(email, otp);
+    try {
+      await sendOtpEmail(email, otp);
+    } catch (error) {
+      await OtpVerification.deleteMany({ email });
+      throw error;
+    }
 
     res.json({ message: "OTP sent successfully." });
   } catch (error) {

@@ -188,7 +188,21 @@ export function SoftwareHeader({
 }: SoftwareHeaderProps) {
   const navigate = useNavigate();
   const { displayName, initials, avatarUrl } = useCurrentUser();
-  const isAdmin = false;
+  
+  // Check if admin from stored user (for logged-in admins)
+  const getStoredAdminUser = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw) return null;
+      const user = JSON.parse(raw);
+      return user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().includes("admin") ? user : null;
+    } catch {
+      return null;
+    }
+  };
+  const isAdmin = !!getStoredAdminUser();
+  
   const [notifOpen, setNotifOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -364,7 +378,7 @@ export function SoftwareHeader({
           },
           { timeout: 3000 },
         );
-        navigate({ to: "/login" });
+        navigate({ to: "/admin" });
       });
   };
 
@@ -804,20 +818,24 @@ export function SoftwareHeader({
                     </button>
                   </div>
 
-                  <div className="h-px bg-[#f0f1f3] mx-1" />
+                  {isAdmin && (
+                    <>
+                      <div className="h-px bg-[#f0f1f3] mx-1" />
 
-                  <div className="flex flex-col p-1">
-                    <button
-                      onClick={() => {
-                        setProfileOpen(false);
-                        setLogoutConfirmOpen(true);
-                      }}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-semibold text-[#dc2626] transition-colors hover:bg-rose-50 hover:text-[#dc2626]"
-                    >
-                      <LogOut className="h-4 w-4 shrink-0 text-[#fca5a5]" />
-                      Log out
-                    </button>
-                  </div>
+                      <div className="flex flex-col p-1">
+                        <button
+                          onClick={() => {
+                            setProfileOpen(false);
+                            setLogoutConfirmOpen(true);
+                          }}
+                          className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-semibold text-[#dc2626] transition-colors hover:bg-rose-50 hover:text-[#dc2626]"
+                        >
+                          <LogOut className="h-4 w-4 shrink-0 text-[#fca5a5]" />
+                          Log out
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

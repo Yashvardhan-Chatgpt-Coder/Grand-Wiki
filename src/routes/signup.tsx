@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { queue } from "@/components/ui/Toast";
 import { authApi, getStoredUser, persistUser } from "@/lib/api";
@@ -8,23 +8,6 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [{ title: "Sign Up | Grand Wiki" }],
   }),
-  beforeLoad: () => {
-    if (typeof window === "undefined") return;
-    const user = getStoredUser();
-    const token = localStorage.getItem("token") || user?.token;
-    if (token || user) {
-      const isAdmin = user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().startsWith("admin");
-      if (isAdmin) {
-        throw redirect({ to: "/" });
-      }
-      const emailKey = user?.email ? `grand_wiki_onboarding_${user.email}` : "";
-      const status = emailKey ? localStorage.getItem(emailKey) || "not_submitted" : "not_submitted";
-      if (user?.approvalStatus !== "approved" && status !== "approved") {
-        throw redirect({ to: "/introduction" });
-      }
-      throw redirect({ to: "/" });
-    }
-  },
   component: Signup,
 });
 
@@ -43,20 +26,6 @@ function Signup() {
   const [resendTimer, setResendTimer] = useState(0);
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const user = getStoredUser();
-    const token = localStorage.getItem("token") || user?.token;
-    if (token || user) {
-      const emailKey = user?.email ? `grand_wiki_onboarding_${user.email}` : "";
-      const status = emailKey ? localStorage.getItem(emailKey) : null;
-      if (user?.approvalStatus !== "approved" && status !== "approved") {
-        navigate({ to: "/introduction", replace: true });
-      } else {
-        navigate({ to: "/", replace: true });
-      }
-    }
-  }, [navigate]);
 
   // Resend code countdown timer
   useEffect(() => {

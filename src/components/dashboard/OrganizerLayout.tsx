@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/dashboard/AppSidebar";
 import { SidebarBrand } from "@/components/dashboard/SidebarBrand";
 
@@ -10,7 +10,6 @@ type OrganizerLayoutProps = {
 };
 
 export function OrganizerLayout({ header, children }: OrganizerLayoutProps) {
-  const navigate = useNavigate();
   const location = useLocation();
   const previousIndexRef = useRef(0);
   const [pageDirection, setPageDirection] = useState(1);
@@ -22,15 +21,6 @@ export function OrganizerLayout({ header, children }: OrganizerLayoutProps) {
     if (location.pathname.startsWith("/teams")) return 3;
     return previousIndexRef.current;
   })();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate({ to: "/login" });
-      return;
-    }
-
-  }, [navigate]);
 
   useEffect(() => {
     const previousIndex = previousIndexRef.current;

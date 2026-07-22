@@ -10,6 +10,12 @@ function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+function emailServiceError(message) {
+  const error = new Error(message);
+  error.status = 503;
+  return error;
+}
+
 // Optimized Cloudinary Logo URL
 const LOGO_URL = "https://res.cloudinary.com/dx4jjbav2/image/upload/f_auto,q_auto,w_240,c_limit/v1784568519/Logo_v5v6fs.png";
 
@@ -88,15 +94,20 @@ async function sendOtpEmail(email, otp) {
 
   if (error) {
     console.error(`[RESEND ERROR] Failed to send OTP email to ${email}:`, error);
+    if (error.statusCode === 401 || error.message?.toLowerCase().includes("api key")) {
+      throw emailServiceError(
+        "Email service is not configured correctly. Please contact an administrator."
+      );
+    }
     if (
       (error.statusCode === 422 || error.statusCode === 403) &&
       (error.message?.includes("testing email address") || error.message?.includes("not verified"))
     ) {
-      throw new Error(
+      throw emailServiceError(
         "Domain verification in Resend is pending. Please click 'Verify Domain' or check DNS status in your Resend dashboard."
       );
     }
-    throw new Error(error.message || "Failed to send verification code via Resend.");
+    throw emailServiceError(error.message || "Failed to send verification code via Resend.");
   }
 
   console.log(`[RESEND SUCCESS] Sent OTP email to ${email}, ID: ${data?.id}`);
@@ -156,7 +167,7 @@ async function sendApprovalEmail(email, name) {
 
   if (error) {
     console.error(`[RESEND ERROR] Failed to send approval email to ${email}:`, error);
-    throw new Error(error.message || "Failed to send approval email via Resend.");
+    throw emailServiceError(error.message || "Failed to send approval email via Resend.");
   }
 
   console.log(`[RESEND SUCCESS] Sent approval email to ${email}, ID: ${data?.id}`);
@@ -219,7 +230,7 @@ async function sendRejectionEmail(email, name, reason) {
 
   if (error) {
     console.error(`[RESEND ERROR] Failed to send rejection email to ${email}:`, error);
-    throw new Error(error.message || "Failed to send rejection email via Resend.");
+    throw emailServiceError(error.message || "Failed to send rejection email via Resend.");
   }
 
   console.log(`[RESEND SUCCESS] Sent rejection email to ${email}, ID: ${data?.id}`);

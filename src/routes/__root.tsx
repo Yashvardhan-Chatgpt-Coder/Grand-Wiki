@@ -5,7 +5,6 @@ import {
   createRootRouteWithContext,
   useRouter,
   useLocation,
-  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -74,7 +73,7 @@ html.dark .rg-dropdown-item{color:#d4d4d4!important}
 html.dark .rg-dropdown-item:hover,html.dark .rg-dropdown-item[data-highlighted="true"]{background:#2a2a2a!important;color:#f5f5f5!important}
 `;
 
-const themeBootScript = `(function(){try{var p=location.pathname;if(p==="/login"||p==="/signup"||p==="/introduction"){document.documentElement.classList.remove("dark");document.documentElement.dataset.appearanceMode="light";document.documentElement.dataset.esTheme="light";document.documentElement.style.colorScheme="light";return}var mode="system";try{var raw=localStorage.getItem("user");if(raw){var u=JSON.parse(raw);if(u&&u.appearanceMode)mode=u.appearanceMode}}catch(e){}var dark=mode==="dark"||(mode!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(dark)document.documentElement.classList.add("dark");document.documentElement.dataset.appearanceMode=mode;document.documentElement.dataset.esTheme=dark?"dark":"light";document.documentElement.style.colorScheme=dark?"dark":"light"}catch(e){}})();`;
+const themeBootScript = `(function(){try{var p=location.pathname;if(p==="/login"||p==="/signup"||p==="/introduction"){document.documentElement.classList.remove("dark");document.documentElement.dataset.appearanceMode="light";document.documentElement.dataset.esTheme="light";document.documentElement.style.colorScheme="light";return}var mode="light";try{var raw=localStorage.getItem("grandwiki_user_preferences");if(raw){var u=JSON.parse(raw);if(u&&u.appearanceMode)mode=u.appearanceMode}}catch(e){}var dark=mode==="dark"||(mode!=="light"&&mode==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(dark)document.documentElement.classList.add("dark");else document.documentElement.classList.remove("dark");document.documentElement.dataset.appearanceMode=mode;document.documentElement.dataset.esTheme=dark?"dark":"light";document.documentElement.style.colorScheme=dark?"dark":"light"}catch(e){}})();`;
 
 function NotFoundComponent() {
   return (
@@ -181,39 +180,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Authentication guard disabled - open access to all
 function OnboardingGuard({ pathname }: { pathname: string }) {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const user = getStoredUser();
-    const token = localStorage.getItem("token") || user?.token;
-
-    // Unauthenticated user attempting to access any page other than /login or /signup
-    if (!token && !user) {
-      if (pathname !== "/login" && pathname !== "/signup") {
-        navigate({ to: "/login", replace: true });
-      }
-      return;
-    }
-
-    const exemptPages = new Set(["/login", "/signup", "/introduction"]);
-    if (exemptPages.has(pathname)) return;
-
-    if (token || user) {
-      const isAdmin = user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().includes("admin");
-      if (isAdmin) return;
-
-      const emailKey = user?.email ? `grand_wiki_onboarding_${user.email}` : "";
-      const status = emailKey ? localStorage.getItem(emailKey) || "not_submitted" : "not_submitted";
-
-      if (user?.approvalStatus !== "approved" && status !== "approved") {
-        navigate({ to: "/introduction", replace: true });
-      }
-    }
-  }, [pathname, navigate]);
-
   return null;
 }
 
@@ -258,7 +226,18 @@ function ThemeClassManager({ pathname }: { pathname: string }) {
         return;
       }
 
-      const nextMode = mode || getStoredUser()?.appearanceMode || "system";
+      // Read from new localStorage key for public users
+      let nextMode: ApiUser["appearanceMode"] = "light";
+      try {
+        const userPrefs = localStorage.getItem("grandwiki_user_preferences");
+        if (userPrefs) {
+          const parsed = JSON.parse(userPrefs);
+          nextMode = parsed.appearanceMode || "light";
+        }
+      } catch {
+        nextMode = mode || "light";
+      }
+      
       const isDark = resolveDarkMode(nextMode);
       root.classList.toggle("dark", isDark);
       root.dataset.appearanceMode = nextMode;
@@ -278,11 +257,13 @@ function ThemeClassManager({ pathname }: { pathname: string }) {
     const onSystemThemeChange = () => applyTheme();
 
     window.addEventListener("esports:user-updated", onUserUpdated);
+    window.addEventListener("grandwiki:user-updated", onUserUpdated); // Listen to new event
     window.addEventListener("esports:appearance-preview", onPreview);
     media.addEventListener("change", onSystemThemeChange);
 
     return () => {
       window.removeEventListener("esports:user-updated", onUserUpdated);
+      window.removeEventListener("grandwiki:user-updated", onUserUpdated);
       window.removeEventListener("esports:appearance-preview", onPreview);
       media.removeEventListener("change", onSystemThemeChange);
     };

@@ -9,21 +9,7 @@ export const Route = createFileRoute("/login")({
     meta: [{ title: "Log In | Grand Wiki" }],
   }),
   beforeLoad: () => {
-    if (typeof window === "undefined") return;
-    const user = getStoredUser();
-    const token = localStorage.getItem("token") || user?.token;
-    if (token || user) {
-      const isAdmin = user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().startsWith("admin");
-      if (isAdmin) {
-        throw redirect({ to: "/" });
-      }
-      const emailKey = user?.email ? `grand_wiki_onboarding_${user.email}` : "";
-      const status = emailKey ? localStorage.getItem(emailKey) || "not_submitted" : "not_submitted";
-      if (user?.approvalStatus !== "approved" && status !== "approved") {
-        throw redirect({ to: "/introduction" });
-      }
-      throw redirect({ to: "/" });
-    }
+    throw redirect({ to: "/admin" });
   },
   component: Login,
 });
@@ -35,20 +21,6 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const user = getStoredUser();
-    const token = localStorage.getItem("token") || user?.token;
-    if (token || user) {
-      const emailKey = user?.email ? `grand_wiki_onboarding_${user.email}` : "";
-      const status = emailKey ? localStorage.getItem(emailKey) : null;
-      if (user?.approvalStatus !== "approved" && status !== "approved") {
-        navigate({ to: "/introduction", replace: true });
-      } else {
-        navigate({ to: "/", replace: true });
-      }
-    }
-  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

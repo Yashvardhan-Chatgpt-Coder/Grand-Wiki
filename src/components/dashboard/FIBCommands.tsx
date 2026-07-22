@@ -128,20 +128,13 @@ function formatForOrg(text: string, orgLabel: string) {
 }
 
 export function FIBCommands({ orgLabel = "FIB" }: OrganizationCommandsProps) {
-  const { user } = useCurrentUser();
+  const { badgeNumber: userBadgeNumber } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   usePageSearchShortcut(searchInputRef);
   
-  const [badgeNumber, setBadgeNumber] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("grandrp-badge-number") || "XXX";
-    }
-    return "XXX";
-  });
-
-  const effectiveBadge = user?.badgeNumber || badgeNumber;
+  const effectiveBadge = userBadgeNumber || "XXX";
 
   const [londonTime, setLondonTime] = useState("");
 
@@ -169,14 +162,6 @@ export function FIBCommands({ orgLabel = "FIB" }: OrganizationCommandsProps) {
       orgLabel,
     );
   }, [effectiveBadge, londonTime, orgLabel]);
-
-  const handleBadgeChange = (val: string) => {
-    const cleaned = val.trim();
-    setBadgeNumber(cleaned || "XXX");
-    if (typeof window !== "undefined") {
-      localStorage.setItem("grandrp-badge-number", cleaned || "XXX");
-    }
-  };
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{

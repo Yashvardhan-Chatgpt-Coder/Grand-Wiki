@@ -1,5 +1,3 @@
-import { authApi } from "./api";
-
 export interface PinnedCommand {
   orgKey: string;
   category: string;
@@ -15,11 +13,6 @@ export interface PinnedGroup {
 
 const PINNED_COMMANDS_KEY = "grandrp-pinned-commands";
 const PINNED_GROUPS_KEY = "grandrp-pinned-groups";
-
-function syncPinnedToBackend(cmds: PinnedCommand[], groups: PinnedGroup[]) {
-  if (typeof window === "undefined" || !localStorage.getItem("token")) return;
-  authApi.updatePinned({ pinnedCommands: cmds, pinnedGroups: groups }).catch(() => {});
-}
 
 export function getPinnedCommands(): PinnedCommand[] {
   if (typeof window === "undefined") return [];
@@ -82,7 +75,6 @@ export function togglePinCommand(orgKey: string, category: string, group: string
     newCmds = [...cmds, { orgKey, category, group, command }];
   }
   savePinnedCommands(newCmds);
-  syncPinnedToBackend(newCmds, getPinnedGroups());
   return !exists; // returns true if pinned, false if unpinned
 }
 
@@ -97,6 +89,5 @@ export function togglePinGroup(orgKey: string, category: string, group: string):
     newGroups = [...groups, { orgKey, category, group }];
   }
   savePinnedGroups(newGroups);
-  syncPinnedToBackend(getPinnedCommands(), newGroups);
   return !exists; // returns true if pinned, false if unpinned
 }

@@ -16,6 +16,7 @@ import {
 } from "@/lib/pinned-store";
 import { ARREST_CATEGORIES } from "@/routes/arrest-procedure";
 import { usePageSearchShortcut } from "@/hooks/use-page-search-shortcut";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/pinned-commands")({
   head: () => ({
@@ -174,18 +175,14 @@ interface ResolvedCommand {
 }
 
 function PinnedCommandsPage() {
+  const { badgeNumber: userBadgeNumber } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   usePageSearchShortcut(searchInputRef);
 
-  const [badgeNumber, setBadgeNumber] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("grandrp-badge-number") || "XXX";
-    }
-    return "XXX";
-  });
+  const effectiveBadge = userBadgeNumber || "XXX";
 
   const [londonTime, setLondonTime] = useState("");
 
@@ -207,17 +204,9 @@ function PinnedCommandsPage() {
 
   const formatCommandText = useCallback((text: string) => {
     return text
-      .replace("{badge}", badgeNumber)
+      .replace("{badge}", effectiveBadge)
       .replace("{time}", londonTime);
-  }, [badgeNumber, londonTime]);
-
-  const handleBadgeChange = (val: string) => {
-    const cleaned = val.trim();
-    setBadgeNumber(cleaned || "XXX");
-    if (typeof window !== "undefined") {
-      localStorage.setItem("grandrp-badge-number", cleaned || "XXX");
-    }
-  };
+  }, [effectiveBadge, londonTime]);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{

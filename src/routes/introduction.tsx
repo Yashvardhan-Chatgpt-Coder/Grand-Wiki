@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -23,22 +23,6 @@ export const Route = createFileRoute("/introduction")({
   head: () => ({
     meta: [{ title: "Profile Setup | Grand Wiki" }],
   }),
-  beforeLoad: () => {
-    if (typeof window === "undefined") return;
-    const user = getStoredUser();
-    if (!user) {
-      throw redirect({ to: "/login" });
-    }
-    const isAdmin = user.role === "admin" || user.role === "ADMIN" || user.email?.toLowerCase().startsWith("admin");
-    if (isAdmin) {
-      throw redirect({ to: "/" });
-    }
-    const emailKey = `grand_wiki_onboarding_${user.email}`;
-    const status = localStorage.getItem(emailKey) || "not_submitted";
-    if (user.approvalStatus === "approved" || status === "approved") {
-      throw redirect({ to: "/" });
-    }
-  },
   component: Introduction,
 });
 
@@ -79,13 +63,6 @@ function Introduction() {
   const { displayName } = useCurrentUser();
   const navigate = useNavigate();
   const currentUser = getStoredUser();
-
-  // Redirect immediately if not logged in
-  useEffect(() => {
-    if (!currentUser) {
-      navigate({ to: "/login", replace: true });
-    }
-  }, [currentUser, navigate]);
 
   // Wizard Step: 1 = Profile Setup, 2 = Identity Proof, 3 = Sent for Approval
   const [step, setStep] = useState<1 | 2 | 3>(1);
