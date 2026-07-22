@@ -28,6 +28,7 @@ interface CommandCategory {
 
 type OrganizationCommandsProps = {
   orgLabel?: string;
+  orgKey?: string;
 };
 
 const BASE_CATEGORIES: CommandCategory[] = [
@@ -41,6 +42,15 @@ const BASE_CATEGORIES: CommandCategory[] = [
           { text: "/do makes sure its recording and uploading to FIB cloud server" },
           { text: "/me connects PDA to FIB cloud server" },
           { text: "{badge} to dispatch show me going 10-41 at {time}" },
+        ],
+      },
+      {
+        title: "Going as UC (Undercover)",
+        commands: [
+          { text: "/me takes out bodycam and attaches it to belt, hides it, checks its ballistic and water proof" },
+          { text: "/me makes sure it is recording and checks for the red light" },
+          { text: "/do It is recording, is ballistic and water proof" },
+          { text: "/me connects PDA to the nearest cell tower" },
         ],
       },
       {
@@ -82,9 +92,23 @@ const BASE_CATEGORIES: CommandCategory[] = [
         ],
       },
       {
+        title: "Drone While Undercover",
+        commands: [
+          { text: "/me takes the FIB drone from the trunk and puts it in the backpack" },
+          { text: "/me takes the FIB drone from the backpack and launches it" },
+          { text: "/me takes the FIB drone from the ground and puts it in the backpack" },
+        ],
+      },
+      {
         title: "Drone Activation",
         commands: [
           { text: "/me launches drone" },
+        ],
+      },
+      {
+        title: "Taking Drone Back",
+        commands: [
+          { text: "/me Takes the FIB Drone from the Ground and put it back in backpack" },
         ],
       },
       {
@@ -119,6 +143,30 @@ const BASE_CATEGORIES: CommandCategory[] = [
           { text: "/me hands over the SSD card to (lawyer's name)" },
         ],
       },
+      {
+        title: "Searching a Trunk",
+        commands: [
+          { text: "/me carefully inspects the trunk and uses a crowbar to attempt opening it" },
+          { text: "/me applies pressure with the crowbar to force the trunk open" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Taking Evidence",
+    groups: [
+      {
+        title: "When License Plate Not Visible",
+        commands: [
+          { text: "/me feels the edges of the vehicle for VIN and checks for ownership" },
+        ],
+      },
+      {
+        title: "When License Plate of Bike Not Visible",
+        commands: [
+          { text: "/me checks the VIN from the steering neck of the bike and checks for ownership" },
+        ],
+      },
     ],
   },
 ];
@@ -127,7 +175,7 @@ function formatForOrg(text: string, orgLabel: string) {
   return text.replace(/\bFIB\b/g, orgLabel);
 }
 
-export function FIBCommands({ orgLabel = "FIB" }: OrganizationCommandsProps) {
+export function FIBCommands({ orgLabel = "FIB", orgKey = "fib" }: OrganizationCommandsProps) {
   const { badgeNumber: userBadgeNumber } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -174,8 +222,25 @@ export function FIBCommands({ orgLabel = "FIB" }: OrganizationCommandsProps) {
 
   const q = searchQuery.toLowerCase().trim();
 
+  // Filter FIB-only sections
+  const categoriesToUse = BASE_CATEGORIES.filter((cat) => {
+    if (orgKey !== "fib") {
+      // Remove FIB-only sections for non-FIB organizations
+      if (cat.title === "Taking Evidence") return false;
+      // Remove "Drone While Undercover" and "Taking Drone Back" groups from "Drone & Radar Operations"
+      if (cat.title === "Drone & Radar Operations") {
+        cat.groups = cat.groups.filter((g) => g.title !== "Drone While Undercover" && g.title !== "Taking Drone Back");
+      }
+      // Remove "Going as UC (Undercover)" group from "Duty & Identification"
+      if (cat.title === "Duty & Identification") {
+        cat.groups = cat.groups.filter((g) => g.title !== "Going as UC (Undercover)");
+      }
+    }
+    return true;
+  });
+
   // Filter categories, groups, and commands dynamically based on the search query
-  const filteredCategories = BASE_CATEGORIES.map((cat) => {
+  const filteredCategories = categoriesToUse.map((cat) => {
     const matchingGroups = cat.groups
       .map((group) => {
         const titleMatch = group.title.toLowerCase().includes(q);

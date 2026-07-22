@@ -58,6 +58,7 @@ function OrganizationsPage() {
         <main className="relative min-h-0 flex-1 overflow-y-auto px-8 pb-8 pt-0">
           {["fib", "lspd", "sahp", "ng", "government"].includes(orgKey) && (
             <FIBCommands
+              orgKey={orgKey}
               orgLabel={
                 orgKey === "government"
                   ? "GOV"

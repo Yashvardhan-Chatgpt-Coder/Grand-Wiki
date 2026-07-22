@@ -375,6 +375,10 @@ function GuideDetailPage() {
                     <p className="text-[14px] text-[#4b5563] mt-1">If the suspect asks for a lawyer, handle the lawyer request first. Do not confiscate illegal items while the lawyer request is still pending.</p>
                   </li>
                   <li>
+                    <strong className="text-black">Lawyer Waiting Time</strong>
+                    <p className="text-[14px] text-[#4b5563] mt-1">If the 10-15 requests a lawyer, you must wait for 15 minutes. If the lawyer does not arrive within 15 minutes, you may proceed with processing the 10-15 normally.</p>
+                  </li>
+                  <li>
                     <strong className="text-black">Lawyer Decisions</strong>
                     <p className="text-[14px] text-[#4b5563] mt-1">The lawyer can suggest releasing the 10-15 if they see violations. However, the final decision is yours.</p>
                   </li>

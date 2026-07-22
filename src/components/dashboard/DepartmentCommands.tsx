@@ -183,6 +183,78 @@ const DEPARTMENT_CATEGORIES: CommandCategory[] = [
           },
         ],
       },
+      {
+        title: "Currently Enroute",
+        commands: [
+          {
+            text: "LSPD to LAST: We're currently enroute to your location!",
+          },
+        ],
+      },
+      {
+        title: "Acknowledgment",
+        commands: [
+          {
+            text: "LSPD to LAST: 10-4, much appreciated!",
+          },
+        ],
+      },
+      {
+        title: "Permission Granted",
+        commands: [
+          {
+            text: "LSPD to LAST: Permission Granted! Proceed as requested.",
+          },
+        ],
+      },
+      {
+        title: "Units Enroute",
+        commands: [
+          {
+            text: "LSPD to LAST: Units are enroute to assist!",
+          },
+        ],
+      },
+      {
+        title: "Officer in Custody Notification",
+        commands: [
+          {
+            text: "LSPD to LAST: We have one of your personnel in custody. Could you 10-17 to DOC?",
+          },
+        ],
+      },
+      {
+        title: "Jurisdiction Entry Notice",
+        commands: [
+          {
+            text: "LSPD to LAST: We are entering your jurisdiction pursuing a vehicle hijacker. Assistance would be appreciated.",
+          },
+        ],
+      },
+      {
+        title: "Requesting HQ Entry Permission",
+        commands: [
+          {
+            text: "LSPD to LAST: Requesting permission to enter your headquarters for official business.",
+          },
+        ],
+      },
+      {
+        title: "EMS Area Restrictions",
+        commands: [
+          {
+            text: "LSPD to EMS: Ghetto area is off-limits for the next 25 minutes. Please notify all medical units.",
+          },
+        ],
+      },
+      {
+        title: "Background Check",
+        commands: [
+          {
+            text: "LSPD to LAST: Background is clean!",
+          },
+        ],
+      },
     ],
   },
   {
@@ -274,6 +346,35 @@ const DEPARTMENT_CATEGORIES: CommandCategory[] = [
       },
     ],
   },
+  {
+    title: "GOV",
+    groups: [
+      {
+        title: "State Lawyer Available",
+        commands: [
+          {
+            text: "GOV to LAST: A state lawyer is available and enroute to your location.",
+          },
+        ],
+      },
+      {
+        title: "State Lawyer Unavailable",
+        commands: [
+          {
+            text: "GOV to LAST: No state lawyer is currently available. You may proceed as per SOP.",
+          },
+        ],
+      },
+      {
+        title: "Private Lawyer Certification Confirmed",
+        commands: [
+          {
+            text: "GOV to LAST: Confirmed. Mr. (Lawyer's Name) is Bar certified.",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -281,24 +382,32 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 const ORG_KEY = "department";
 
 export function DepartmentCommands() {
-  const { user } = useCurrentUser();
+  const { organization } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [recipients, setRecipients] = useState<Record<string, Recipient>>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>("Generic Commands");
   const searchInputRef = useRef<HTMLInputElement>(null);
   usePageSearchShortcut(searchInputRef);
 
   // Dynamic prefix logic based on selected organization
-  const selectedOrg = user?.organization?.name || "";
-  const prefix = ["LSPD", "FIB", "SAHP", "NG", "GOV", "EMS"].includes(selectedOrg.toUpperCase())
-    ? selectedOrg.toUpperCase()
+  const prefix = organization && ["LSPD", "FIB", "SAHP", "NG", "GOVERNMENT", "EMS"].includes(organization.toUpperCase())
+    ? organization.toUpperCase() === "GOVERNMENT" ? "GOV" : organization.toUpperCase()
     : "LSPD";
 
   const applyRecipientLocal = useCallback((text: string, recipient: string): string => {
-    // Replaces 'LSPD to' or similar with current prefix
-    const withPrefix = text.replace(/^[A-Za-z0-9\s]+to\b/i, `${prefix} to`);
+    // Determine which prefix to use based on selected category
+    let commandPrefix = prefix; // Default to user's org for Generic/Events
+    
+    // For organization-specific categories, use that org's name
+    if (["LSPD", "FIB", "SAHP", "NG", "GOV", "EMS"].includes(selectedCategory)) {
+      commandPrefix = selectedCategory === "GOV" ? "GOV" : selectedCategory;
+    }
+    
+    // Replaces 'LSPD to' or similar with appropriate prefix
+    const withPrefix = text.replace(/^[A-Za-z0-9\s]+to\b/i, `${commandPrefix} to`);
     return withPrefix.replace(/\bto\s+[^:]+:/i, `to ${recipient}:`);
-  }, [prefix]);
+  }, [prefix, selectedCategory]);
 
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -320,34 +429,36 @@ export function DepartmentCommands() {
 
   const q = searchQuery.toLowerCase().trim();
 
-  const filteredCategories = DEPARTMENT_CATEGORIES.map((cat) => {
-    const matchingGroups = cat.groups
-      .map((group) => {
-        const titleMatch = group.title.toLowerCase().includes(q);
-        const matchingCommands = group.commands.filter((cmd) => {
-          const key = recipientKey(cat.title, group.title, cmd.text);
-          const displayText = applyRecipientLocal(cmd.text, getRecipient(key));
-          return (
-            cmd.text.toLowerCase().includes(q) ||
-            displayText.toLowerCase().includes(q)
-          );
-        });
+  const filteredCategories = DEPARTMENT_CATEGORIES
+    .filter((cat) => !selectedCategory || cat.title === selectedCategory)
+    .map((cat) => {
+      const matchingGroups = cat.groups
+        .map((group) => {
+          const titleMatch = group.title.toLowerCase().includes(q);
+          const matchingCommands = group.commands.filter((cmd) => {
+            const key = recipientKey(cat.title, group.title, cmd.text);
+            const displayText = applyRecipientLocal(cmd.text, getRecipient(key));
+            return (
+              cmd.text.toLowerCase().includes(q) ||
+              displayText.toLowerCase().includes(q)
+            );
+          });
 
-        if (titleMatch) {
-          return group;
-        }
-        if (matchingCommands.length > 0) {
-          return { ...group, commands: matchingCommands };
-        }
-        return null;
-      })
-      .filter(Boolean) as CommandGroup[];
+          if (titleMatch) {
+            return group;
+          }
+          if (matchingCommands.length > 0) {
+            return { ...group, commands: matchingCommands };
+          }
+          return null;
+        })
+        .filter(Boolean) as CommandGroup[];
 
-    if (matchingGroups.length > 0) {
-      return { ...cat, groups: matchingGroups };
-    }
-    return null;
-  }).filter(Boolean) as CommandCategory[];
+      if (matchingGroups.length > 0) {
+        return { ...cat, groups: matchingGroups };
+      }
+      return null;
+    }).filter(Boolean) as CommandCategory[];
 
   const handleCopy = useCallback(async (text: string, id: string) => {
     try {
@@ -439,25 +550,6 @@ export function DepartmentCommands() {
     );
   };
 
-  const categoryId = (title: string) =>
-    `department-category-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-
-  const handleJumpToCategory = (title: string) => {
-    const scroll = () => {
-      document.getElementById(categoryId(title))?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    };
-
-    if (searchQuery) {
-      setSearchQuery("");
-      setTimeout(scroll, 50);
-      return;
-    }
-    scroll();
-  };
-
   return (
     <div className="mx-auto max-w-[1200px]">
       <div className="sticky top-0 z-40 -mx-8 border-b border-[#e7e9f0] bg-white px-8 pb-4 pt-6">
@@ -473,13 +565,20 @@ export function DepartmentCommands() {
               className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none transition-colors focus:border-[#000000]"
             />
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
+          
+          {/* Segmented Control Menu */}
+          <div className="inline-flex rounded-[8px] border border-[#e2e5ec] bg-[#f7f8fb] p-1">
             {DEPARTMENT_CATEGORIES.map((category) => (
               <button
                 key={category.title}
                 type="button"
-                onClick={() => handleJumpToCategory(category.title)}
-                className="h-9 cursor-pointer rounded-[6px] border border-[#e2e5ec] bg-[#f4f5f7] px-3 text-[12px] font-semibold text-[#000000] transition-colors hover:bg-[#eef0f4] select-none"
+                onClick={() => setSelectedCategory(category.title)}
+                className={cn(
+                  "cursor-pointer rounded-[6px] px-4 py-1.5 text-[12px] font-semibold transition-all select-none whitespace-nowrap",
+                  selectedCategory === category.title
+                    ? "bg-white text-[#000000] shadow-sm"
+                    : "text-[#666666] hover:text-[#000000]"
+                )}
               >
                 {category.title}
               </button>
@@ -493,11 +592,7 @@ export function DepartmentCommands() {
         <div className="space-y-8">
           {filteredCategories.map((category) => {
             return (
-              <div key={category.title} id={categoryId(category.title)} className="scroll-mt-[88px] space-y-4">
-                <h2 className="text-[15px] font-bold text-[#000000]">
-                  {category.title}
-                </h2>
-
+              <div key={category.title} className="space-y-4">
                 <div className="overflow-x-auto rounded-[8px] border border-[#e2e5ec] bg-white">
                   <table className="w-full text-left table-fixed border-collapse">
                     <thead>
