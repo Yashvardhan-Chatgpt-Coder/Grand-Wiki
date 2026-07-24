@@ -23,6 +23,11 @@ const GUIDES: GuideItem[] = [
     title: "How To Process A 10-15",
     image: "/Guides/How to arrest a 10-15.png",
   },
+  {
+    id: "10-51-procedure",
+    title: "10-51 Procedure",
+    image: "/Guides/10-51 Procedure.png",
+  },
 ];
 
 function GuidesPage() {
@@ -61,8 +66,20 @@ function GuidesPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search guides..."
-                className="h-11 w-full rounded-[10px] border border-[#e2e5ec] bg-white pl-11 pr-4 text-[13px] outline-none placeholder:text-[#9aa1b0] focus:border-[#000000]"
+                className="h-11 w-full rounded-[10px] border border-[#e2e5ec] bg-white pl-11 pr-11 text-[13px] outline-none placeholder:text-[#9aa1b0] focus:border-[#000000]"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8a90a0] hover:text-[#000000] transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </label>
           </div>
 

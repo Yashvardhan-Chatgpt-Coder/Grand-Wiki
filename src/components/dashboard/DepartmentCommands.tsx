@@ -562,8 +562,20 @@ export function DepartmentCommands() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search commands or procedures... (Ctrl H)"
-              className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none transition-colors focus:border-[#000000]"
+              className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-9 text-[13px] text-[#000000] outline-none transition-colors focus:border-[#000000]"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8a90a0] hover:text-[#000000] transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
           
           {/* Segmented Control Menu */}

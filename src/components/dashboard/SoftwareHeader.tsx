@@ -5,6 +5,7 @@ import {
   Heart,
   Plus,
   Search,
+  X,
   Pin,
   Database,
   AlertCircle,
@@ -36,7 +37,7 @@ type SoftwareHeaderProps = {
   onSearchChange?: (value: string) => void;
 };
 
-const GLOBAL_SEARCH_TERMS = ["guides", "how to process a 10-15", "Patrolman's Guide", "vehicle ticketing tool"];
+const GLOBAL_SEARCH_TERMS = ["guides", "how to process a 10-15", "10-51 procedure", "traffic stop", "Patrolman's Guide", "vehicle ticketing tool"];
 
 const textLoopVariants = {
   initial: {
@@ -76,6 +77,13 @@ const GUIDES_SEARCH_DATA = [
     id: "how-to-process-a-10-15",
     title: "How To Process A 10-15",
     url: "/guides/how-to-process-a-10-15",
+    parentSection: "Guides",
+    sections: []
+  },
+  {
+    id: "10-51-procedure",
+    title: "10-51 Procedure",
+    url: "/guides/10-51-procedure",
     parentSection: "Guides",
     sections: []
   }
@@ -527,6 +535,17 @@ export function SoftwareHeader({
             }
             role={enableGlobalSearch ? "combobox" : undefined}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => updateSearchQuery("")}
+              className="absolute right-3 top-1/2 z-20 -translate-y-1/2 text-[#9aa1b0] transition-colors hover:cursor-pointer hover:text-[#000000]"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
           {enableGlobalSearch && !searchQuery && (
             <>
               <div className="pointer-events-none absolute left-10 top-1/2 flex -translate-y-1/2 items-center text-[14px] text-[#9aa1b0]">

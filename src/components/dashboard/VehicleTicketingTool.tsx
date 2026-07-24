@@ -789,9 +789,21 @@ export function VehicleTicketingTool() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by code or description..."
-            className="h-full w-full bg-transparent pl-9 pr-3 text-[13px] text-[#000000] outline-none border-0 ring-0 focus:ring-0 focus:outline-none"
+            className="h-full w-full bg-transparent pl-9 pr-9 text-[13px] text-[#000000] outline-none border-0 ring-0 focus:ring-0 focus:outline-none"
             style={{ border: "none", outline: "none", boxShadow: "none" }}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 text-[#8a90a0] hover:text-[#000000] transition-colors"
+              aria-label="Clear search"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* N/A Recommendation (T.C. 2.1) at the top */}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, ChevronDown, Search } from "lucide-react";
+import { CheckCircle2, ChevronDown, Search, X } from "lucide-react";
 import { Command } from "cmdk";
 
 type AppSearchSelectOption = {
@@ -32,13 +32,18 @@ export function AppSearchSelect({
   compact = false,
 }: AppSearchSelectProps) {
   const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const selectedOption = options.find((option) => option.value === value);
 
   return (
     <div className={className}>
       <Popover.Root
         open={disabled ? false : open}
-        onOpenChange={(nextOpen) => !disabled && setOpen(nextOpen)}
+            onOpenChange={(nextOpen) => {
+              if (disabled) return;
+              setOpen(nextOpen);
+              if (!nextOpen) setSearchValue("");
+            }}
       >
         <Popover.Trigger asChild>
           <button
@@ -89,8 +94,20 @@ export function AppSearchSelect({
                       <Command.Input
                         placeholder="Search..."
                         data-no-style
+                        value={searchValue}
+                        onValueChange={setSearchValue}
                         className="h-9 w-full border-none bg-transparent text-[13px] text-[#000000] outline-none placeholder:text-[#9aa1b0]"
                       />
+                      {searchValue && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchValue("")}
+                          className="shrink-0 text-[#9aa1b0] transition-colors hover:cursor-pointer hover:text-[#000000]"
+                          aria-label="Clear search"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                     <Command.List className="max-h-[220px] overflow-y-auto p-1 text-[13px]">
                       <Command.Empty className="py-4 text-center text-[12px] text-[#9aa1b0]">

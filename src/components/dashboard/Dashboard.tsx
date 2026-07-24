@@ -18,6 +18,7 @@ interface WhatsNewItem {
   title: string;
   description: string;
   time: string;
+  url: string;
 }
 
 interface GuideCard {
@@ -97,21 +98,24 @@ export function Dashboard() {
       tag: "TOOL",
       title: "Vehicle Ticketing Tool",
       description: "Complete vehicle ticketing system with tax multipliers and penalty points tracking.",
-      time: "Today"
+      time: "Today",
+      url: "/vehicle-ticketing"
     },
     {
       id: "2",
       tag: "GUIDE",
       title: "Patrolman's Guide",
       description: "Essential patrol procedures, radio codes, and field operations handbook.",
-      time: "Today"
+      time: "Today",
+      url: "/patrolman-guide"
     },
     {
       id: "3",
       tag: "REFERENCE",
       title: "Department Radio",
       description: "Official radio frequencies and communication protocols for all departments.",
-      time: "Today"
+      time: "Today",
+      url: "/department-radio"
     }
   ]);
 
@@ -167,9 +171,10 @@ export function Dashboard() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               {whatsNewList.map((item) => (
-                <div
+                <Link
                   key={item.id}
-                  className="flex flex-col rounded-[8px] border border-[#e2e5ec] bg-white p-4 transition-all hover:bg-[#f7f8fb]"
+                  to={item.url}
+                  className="flex flex-col rounded-[8px] border border-[#e2e5ec] bg-white p-4 transition-all hover:bg-[#f7f8fb] cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
                     <span className="inline-block rounded-[3px] bg-[#f0f1f3] px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[#4b5563]">
@@ -184,7 +189,7 @@ export function Dashboard() {
                   <p className="mt-1.5 flex-1 text-[12px] text-[#666666] leading-relaxed line-clamp-3">
                     {item.description}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

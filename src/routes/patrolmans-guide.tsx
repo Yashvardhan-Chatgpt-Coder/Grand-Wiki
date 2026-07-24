@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Search, Star, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { Search, Star, ChevronDown, ChevronRight, Info, X } from "lucide-react";
 import { OrganizerLayout } from "@/components/dashboard/OrganizerLayout";
 import { SoftwareHeader } from "@/components/dashboard/SoftwareHeader";
 import { cn } from "@/lib/utils";
-import { PATROLMAN_GUIDE_DATA } from "@/data/patrolmanGuide";
+import { PATROLMAN_GUIDE_DATA, PENAL_CODE_LEGAL_DESCRIPTIONS } from "@/data/patrolmanGuide";
 import { motion } from "framer-motion";
 import { usePageSearchShortcut } from "@/hooks/use-page-search-shortcut";
 
@@ -21,9 +21,68 @@ const HIGHLIGHT_STYLES: Record<string, string> = {
   "revocation-driver": "border-l-[3px] border-l-[#ef4444] bg-[#ef4444]/15 text-[#fca5a5]",
   "revocation-gun": "border-l-[3px] border-l-[#22c55e] bg-[#22c55e]/15 text-[#86efac]",
   "revocation-all": "border-l-[3px] border-l-[#ec4899] bg-[#ec4899]/15 text-[#f472b6]",
-  "blacklist": "border-l-[3px] border-l-[#64748b] bg-[#64748b]/15 text-[#cbd5e1]",
-  "dismissal": "border-l-[3px] border-l-[#94a3b8] bg-[#94a3b8]/15 text-[#e2e8f0]",
+  "blacklist": "border-l-[3px] border-l-[#1f2937] bg-[#1f2937]/15 text-[#d1d5db]",
+  "dismissal": "border-l-[3px] border-l-[#9ca3af] bg-[#9ca3af]/15 text-[#e5e7eb]",
 };
+
+const HIGHLIGHT_COLORS: Record<string, string> = {
+  "no-bailout": "#eab308",
+  "sentence-varies": "#3b82f6",
+  "revocation-driver": "#ef4444",
+  "revocation-gun": "#22c55e",
+  "revocation-all": "#ec4899",
+  "blacklist": "#1f2937",
+  "dismissal": "#9ca3af",
+};
+
+const ROW_BG_COLORS: Record<string, string> = {
+  "no-bailout": "#fcf7da",
+  "sentence-varies": "#eef4fe",
+  "revocation-driver": "#fdecee",
+  "revocation-gun": "#e9f9ee",
+  "revocation-all": "#fdeef5",
+  "blacklist": "#dedede",
+  "dismissal": "#f0f1f3",
+};
+
+const BORDER_LEFT_COLORS: Record<string, string> = {
+  "no-bailout": "#eab308",
+  "sentence-varies": "#3b82f6",
+  "revocation-driver": "#ef4444",
+  "revocation-gun": "#22c55e",
+  "revocation-all": "#ec4899",
+  "blacklist": "#1f2937",
+  "dismissal": "#9ca3af",
+};
+
+function getRowBorderAccent(highlight?: string): { className: string; style?: React.CSSProperties } {
+  if (!highlight) return { className: "border-l-[3px] border-l-transparent" };
+  const highlights = highlight.split(',').map(h => h.trim()).filter(Boolean);
+  if (highlights.length === 0) return { className: "border-l-[3px] border-l-transparent" };
+  const mainColor = BORDER_LEFT_COLORS[highlights[0]] || "transparent";
+  return {
+    className: "border-l-[3px]",
+    style: { borderLeftColor: mainColor }
+  };
+}
+
+const TOTAL_COLS = 7; // Checkbox, Code, Charges, Fine, Time, Stars/Points, Description
+
+function getCellBgForColumn(highlight: string | undefined, colIndex: number): React.CSSProperties {
+  if (!highlight) return { backgroundColor: "#ffffff" };
+  const highlights = highlight.split(',').map(h => h.trim()).filter(Boolean);
+  if (highlights.length === 0) return { backgroundColor: "#ffffff" };
+
+  if (highlights.length === 1) {
+    return { backgroundColor: ROW_BG_COLORS[highlights[0]] || "#ffffff" };
+  }
+
+  // Multi-highlight: divide the row's columns into equal color zones
+  // e.g. 2 highlights across 7 cols → cols 0-2 = color1, cols 3-6 = color2
+  const zoneSize = TOTAL_COLS / highlights.length;
+  const zoneIndex = Math.min(Math.floor(colIndex / zoneSize), highlights.length - 1);
+  return { backgroundColor: ROW_BG_COLORS[highlights[zoneIndex]] || "#ffffff" };
+}
 
 const LEGEND_ITEMS = [
   { color: "bg-[#eab308]", label: "No Bailout" },
@@ -172,7 +231,9 @@ function PatrolmansGuidePage() {
       if (selected) {
         const entry = allEntries.find(e => e.code === code);
         if (entry?.highlight) {
-          highlights.add(entry.highlight);
+          // Split comma-separated highlights
+          const entryHighlights = entry.highlight.split(',').map(h => h.trim()).filter(Boolean);
+          entryHighlights.forEach(h => highlights.add(h));
         }
       }
     });
@@ -215,7 +276,8 @@ function PatrolmansGuidePage() {
         entries: a.entries.filter(
           (e) =>
             e.code.toLowerCase().includes(q) ||
-            e.description.toLowerCase().includes(q)
+            e.description.toLowerCase().includes(q) ||
+            (e.legalDescription || PENAL_CODE_LEGAL_DESCRIPTIONS[e.code] || "").toLowerCase().includes(q)
         ),
       }))
       .filter((a) => a.entries.length > 0);
@@ -227,7 +289,14 @@ function PatrolmansGuidePage() {
   );
 
   return (
-    <OrganizerLayout header={<SoftwareHeader title="Patrolman's Guide" />}>
+    <>
+      <style>{`
+        .multi-highlight-row:hover,
+        .multi-highlight-row:active {
+          background-image: var(--multi-highlight-image) !important;
+        }
+      `}</style>
+      <OrganizerLayout header={<SoftwareHeader title="Patrolman's Guide" />}>
       <div className="flex min-w-0 flex-1 flex-col min-h-0">
         {/* Header – matches org page with section view buttons on right */}
         <header className="shrink-0 border-b border-[#e7e9f0] bg-white px-8 py-6">
@@ -337,6 +406,16 @@ function PatrolmansGuidePage() {
                         className="h-full w-full bg-transparent pl-9 pr-3 text-[13px] text-[#000000] dark:text-white outline-none border-0 ring-0 focus:ring-0 focus:outline-none"
                         style={{ border: "none", outline: "none", boxShadow: "none" }}
                       />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-2.5 text-[#8a90a0] transition-colors hover:cursor-pointer hover:text-[#000000] dark:hover:text-white"
+                          aria-label="Clear search"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -551,10 +630,10 @@ function PatrolmansGuidePage() {
                             )}
 
                             <div className="overflow-x-auto rounded-[8px] border border-[#e2e5ec] bg-white">
-                              <table className="w-full text-left table-fixed border-collapse">
+                              <table className="w-full min-w-[1300px] text-left table-fixed border-collapse">
                                 <thead>
                                   <tr className="bg-[#f9fbfc] text-[11px] font-semibold uppercase tracking-wide text-[#8a93a3] border-b border-[#e2e5ec]">
-                                    <th className="w-[5%] px-4 py-3 text-center checkbox-cell">
+                                    <th className="sticky left-0 z-30 w-[50px] min-w-[50px] bg-[#f9fbfc] px-4 py-3 text-center checkbox-cell">
                                       <input
                                         type="checkbox"
                                         data-no-style
@@ -572,16 +651,19 @@ function PatrolmansGuidePage() {
                                         className="h-4 w-4 rounded border-[#e2e5ec] bg-white text-black accent-black cursor-pointer"
                                       />
                                     </th>
-                                    <th className="w-[15%] px-6 py-3">Code</th>
-                                    <th className="w-[40%] px-6 py-3">
-                                      Description
+                                    <th className="sticky left-[50px] z-30 w-[140px] min-w-[140px] bg-[#f9fbfc] px-6 py-3">Code</th>
+                                    <th className="sticky left-[190px] z-30 w-[280px] min-w-[280px] bg-[#f9fbfc] px-6 py-3">
+                                      Charges
                                     </th>
-                                    <th className="w-[13%] px-6 py-3">Fine</th>
-                                    <th className="w-[13%] px-6 py-3">
+                                    <th className="w-[110px] min-w-[100px] px-6 py-3">Fine</th>
+                                    <th className="w-[120px] min-w-[110px] px-6 py-3">
                                       Time (Months)
                                     </th>
-                                    <th className="w-[14%] px-6 py-3">
+                                    <th className="w-[100px] min-w-[90px] px-6 py-3">
                                       {isMisdemeanor ? "Points" : "Stars"}
+                                    </th>
+                                    <th className="w-[480px] min-w-[350px] px-6 py-3">
+                                      Description
                                     </th>
                                   </tr>
                                 </thead>
@@ -589,6 +671,17 @@ function PatrolmansGuidePage() {
                                   {article.entries.map((entry, idx) => {
                                     const isSelected = !!selectedCodes[entry.code];
                                     const isCopied = copiedCode === entry.code;
+                                    const borderAccent = getRowBorderAccent(entry.highlight);
+                                    const copiedBg: React.CSSProperties = { backgroundColor: "#e6fbf4" };
+                                    const cellBg = (col: number) => isCopied ? copiedBg : getCellBgForColumn(entry.highlight, col);
+                                    const rowBorderStyle = isCopied
+                                      ? { borderLeftColor: "#10b981" }
+                                      : borderAccent.style;
+                                    const rowBorderClass = isCopied
+                                      ? "border-l-[3px]"
+                                      : borderAccent.className;
+                                    const legalDescription =
+                                      entry.legalDescription || PENAL_CODE_LEGAL_DESCRIPTIONS[entry.code] || "—";
 
                                     return (
                                       <tr
@@ -599,17 +692,16 @@ function PatrolmansGuidePage() {
                                           }
                                           handleCopyCode(entry.code);
                                         }}
+                                        style={rowBorderStyle}
                                         className={cn(
                                           "cursor-pointer transition-colors duration-150 select-none",
-                                          isCopied
-                                            ? "bg-[#e6fbf4] hover:bg-[#e6fbf4] border-l-[3px] border-l-[#10b981]"
-                                            : cn(
-                                                "hover:bg-[#f9fbfc] active:bg-[#f3f4f6]",
-                                                entry.highlight ? HIGHLIGHT_STYLES[entry.highlight] : "border-l-[3px] border-l-transparent"
-                                              )
+                                          rowBorderClass
                                         )}
                                       >
-                                        <td className="px-4 py-3.5 text-center checkbox-cell align-top">
+                                        <td
+                                          className="sticky left-0 z-20 w-[50px] min-w-[50px] px-4 py-3.5 text-center checkbox-cell align-top"
+                                          style={cellBg(0)}
+                                        >
                                           <input
                                             type="checkbox"
                                             data-no-style
@@ -624,7 +716,10 @@ function PatrolmansGuidePage() {
                                             className="h-4 w-4 rounded border-[#e2e5ec] bg-white text-black accent-black cursor-pointer"
                                           />
                                         </td>
-                                        <td className="px-6 py-3.5 text-[13px] font-bold text-[#000000] align-top">
+                                        <td
+                                          className="sticky left-[50px] z-20 w-[140px] min-w-[140px] px-6 py-3.5 text-[13px] font-bold text-[#000000] align-top"
+                                          style={cellBg(1)}
+                                        >
                                           <div className="flex items-center gap-2">
                                             <span>{entry.code}</span>
                                             {isCopied && (
@@ -634,19 +729,40 @@ function PatrolmansGuidePage() {
                                             )}
                                           </div>
                                         </td>
-                                        <td className="px-6 py-3.5 text-[13px] text-[#2b2f3a] font-normal leading-relaxed break-words align-top">
+                                        <td
+                                          className="sticky left-[190px] z-20 w-[280px] min-w-[280px] px-6 py-3.5 text-[13px] text-[#2b2f3a] font-normal leading-relaxed break-words align-top"
+                                          style={cellBg(2)}
+                                        >
                                           {entry.description}
                                         </td>
                                         {entry.code.startsWith("P.C. 9.1.") ? (
-                                          <td colSpan={3} className="px-6 py-3.5 text-[12px] font-semibold text-[#ef4444] text-center bg-[#fef2f2] align-middle select-none">
-                                            Isolation
-                                          </td>
+                                          <>
+                                            <td
+                                              colSpan={3}
+                                              className="px-6 py-3.5 text-[12px] font-semibold text-[#ef4444] text-center align-middle select-none"
+                                              style={cellBg(4)}
+                                            >
+                                              Isolation
+                                            </td>
+                                            <td
+                                              className="px-6 py-3.5 text-[13px] text-[#2b2f3a] font-normal leading-relaxed break-words align-top"
+                                              style={cellBg(6)}
+                                            >
+                                              {legalDescription}
+                                            </td>
+                                          </>
                                         ) : (
                                           <>
-                                            <td className="px-6 py-3.5 text-[13px] font-semibold text-[#10b981] align-top">
+                                            <td
+                                              className="px-6 py-3.5 text-[13px] font-semibold text-[#10b981] align-top"
+                                              style={cellBg(3)}
+                                            >
                                               {entry.fine}
                                             </td>
-                                            <td className="px-6 py-3.5 text-[13px] font-medium text-[#303646] align-top">
+                                            <td
+                                              className="px-6 py-3.5 text-[13px] font-medium text-[#303646] align-top"
+                                              style={cellBg(4)}
+                                            >
                                               {entry.time === "-" ? (
                                                 <span className="text-[#8a90a0]">
                                                   —
@@ -655,7 +771,10 @@ function PatrolmansGuidePage() {
                                                 entry.time
                                               )}
                                             </td>
-                                            <td className="px-6 py-3.5 align-top">
+                                            <td
+                                              className="px-6 py-3.5 align-top"
+                                              style={cellBg(5)}
+                                            >
                                               {isMisdemeanor ? (
                                                 <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] rounded-full bg-[#f0f1f3] text-[11px] font-bold text-[#303646]">
                                                   {entry.points || "—"}
@@ -663,6 +782,12 @@ function PatrolmansGuidePage() {
                                               ) : (
                                                 renderStars(entry.stars)
                                               )}
+                                            </td>
+                                            <td
+                                              className="px-6 py-3.5 text-[13px] text-[#2b2f3a] font-normal leading-relaxed break-words align-top"
+                                              style={cellBg(6)}
+                                            >
+                                              {legalDescription}
                                             </td>
                                           </>
                                         )}
@@ -979,7 +1104,8 @@ function PatrolmansGuidePage() {
           </div>
         </main>
       </div>
-    </OrganizerLayout>
+      </OrganizerLayout>
+    </>
   );
 }
 

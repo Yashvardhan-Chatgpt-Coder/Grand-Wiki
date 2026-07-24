@@ -169,6 +169,25 @@ const BASE_CATEGORIES: CommandCategory[] = [
       },
     ],
   },
+  {
+    title: "Lawyer Contract",
+    groups: [
+      {
+        title: "For Lawyer",
+        commands: [
+          { text: "/me hands (Your Name) a Contract for Additional Legal Services and a pen" },
+          { text: "/me takes the Contract for Additional Legal Services from (Your Name) and signs it" },
+        ],
+      },
+      {
+        title: "For Client",
+        commands: [
+          { text: "/me takes the Contract for Additional Legal Services from (Your Name)" },
+          { text: "/do signs the Contract for Additional Legal Services and hands back to (Your Name)" },
+        ],
+      },
+    ],
+  },
 ];
 
 function formatForOrg(text: string, orgLabel: string) {
@@ -222,10 +241,10 @@ export function FIBCommands({ orgLabel = "FIB", orgKey = "fib" }: OrganizationCo
 
   const q = searchQuery.toLowerCase().trim();
 
-  // Filter FIB-only sections
+  // Filter organization-specific sections
   const categoriesToUse = BASE_CATEGORIES.filter((cat) => {
+    // Filter FIB-only sections
     if (orgKey !== "fib") {
-      // Remove FIB-only sections for non-FIB organizations
       if (cat.title === "Taking Evidence") return false;
       // Remove "Drone While Undercover" and "Taking Drone Back" groups from "Drone & Radar Operations"
       if (cat.title === "Drone & Radar Operations") {
@@ -236,6 +255,12 @@ export function FIBCommands({ orgLabel = "FIB", orgKey = "fib" }: OrganizationCo
         cat.groups = cat.groups.filter((g) => g.title !== "Going as UC (Undercover)");
       }
     }
+    
+    // Filter Government-only sections
+    if (orgKey !== "government") {
+      if (cat.title === "Lawyer Contract") return false;
+    }
+    
     return true;
   });
 
@@ -372,8 +397,20 @@ export function FIBCommands({ orgLabel = "FIB", orgKey = "fib" }: OrganizationCo
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search commands or procedures... (Ctrl H)"
-                className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none transition-colors focus:border-[#000000]"
+                className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-9 text-[13px] text-[#000000] outline-none transition-colors focus:border-[#000000]"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8a90a0] hover:text-[#000000] transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-1.5 text-[12px] bg-[#f8f9fa] border border-[#e2e5ec] rounded-[6px] px-3 h-9 font-semibold text-[#4d5568]">
               <span>Badge:</span>
