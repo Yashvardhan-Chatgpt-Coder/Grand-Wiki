@@ -76,16 +76,9 @@ type GlobalSearchResult = {
 
 const GUIDES_SEARCH_DATA = [
   {
-    id: "how-to-process-a-10-15",
-    title: "How To Process A 10-15",
-    url: "/guides/how-to-process-a-10-15",
-    parentSection: "Guides",
-    sections: []
-  },
-  {
-    id: "10-51-procedure",
-    title: "10-51 Procedure",
-    url: "/guides/10-51-procedure",
+    id: "introduction-to-lspd",
+    title: "Introduction To LSPD",
+    url: "/guides/introduction-to-lspd",
     parentSection: "Guides",
     sections: []
   }

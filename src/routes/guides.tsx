@@ -19,14 +19,9 @@ type GuideItem = {
 
 const GUIDES: GuideItem[] = [
   {
-    id: "how-to-process-a-10-15",
-    title: "How To Process A 10-15",
-    image: "/Guides/How to arrest a 10-15.png",
-  },
-  {
-    id: "10-51-procedure",
-    title: "10-51 Procedure",
-    image: "/Guides/10-51 Procedure.png",
+    id: "introduction-to-lspd",
+    title: "Introduction To LSPD",
+    image: "/Guides/Introduction To LSPD.png",
   },
 ];
 

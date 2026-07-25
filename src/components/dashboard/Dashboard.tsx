@@ -29,9 +29,9 @@ interface GuideCard {
 
 const GUIDES: GuideCard[] = [
   {
-    id: "how-to-process-a-10-15",
-    title: "How To Process A 10-15",
-    image: "/Guides/How to arrest a 10-15.png"
+    id: "introduction-to-lspd",
+    title: "Introduction To LSPD",
+    image: "/Guides/Introduction To LSPD.png"
   }
   // Add more guides here as they're created
 ];
@@ -95,27 +95,27 @@ export function Dashboard() {
   const [whatsNewList] = useState<WhatsNewItem[]>([
     {
       id: "1",
-      tag: "TOOL",
-      title: "Vehicle Ticketing Tool",
-      description: "Complete vehicle ticketing system with tax multipliers and penalty points tracking.",
-      time: "Today",
-      url: "/vehicle-ticketing"
-    },
-    {
-      id: "2",
-      tag: "GUIDE",
-      title: "Patrolman's Guide",
-      description: "Essential patrol procedures, radio codes, and field operations handbook.",
-      time: "Today",
-      url: "/patrolman-guide"
-    },
-    {
-      id: "3",
       tag: "REFERENCE",
       title: "Department Radio",
       description: "Official radio frequencies and communication protocols for all departments.",
       time: "Today",
       url: "/department-radio"
+    },
+    {
+      id: "2",
+      tag: "REFERENCE",
+      title: "Patrolman's Guide",
+      description: "Essential patrol procedures, radio codes, and field operations handbook.",
+      time: "Today",
+      url: "/patrolmans-guide"
+    },
+    {
+      id: "3",
+      tag: "TOOL",
+      title: "Vehicle Ticketing Tool",
+      description: "Complete vehicle ticketing system with tax multipliers and penalty points tracking.",
+      time: "Today",
+      url: "/vehicle-ticketing"
     }
   ]);
 
@@ -147,7 +147,7 @@ export function Dashboard() {
                   <img
                     src={guide.image}
                     alt={guide.title}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover object-[center_25%]"
                   />
                   {/* White overlay on hover */}
                   <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
