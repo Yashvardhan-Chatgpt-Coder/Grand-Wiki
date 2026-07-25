@@ -13,7 +13,7 @@ const GUIDE_DETAILS: Record<
     title: string;
     image: string;
     summary: string;
-    updated: string;
+    lastUpdated: Date;
     readTime: string;
   }
 > = {
@@ -21,17 +21,38 @@ const GUIDE_DETAILS: Record<
     title: "How To Process A 10-15",
     image: "/Guides/How to arrest a 10-15.png",
     summary: "Complete arrest flow from cuffing the suspect to final DOC processing.",
-    updated: "Today",
+    lastUpdated: new Date("2026-07-21"), // Set the actual last update date
     readTime: "8 min",
   },
   "10-51-procedure": {
     title: "10-51 Procedure",
     image: "/Guides/10-51 Procedure.png",
     summary: "Standard traffic stop procedure from radar activation to vehicle departure.",
-    updated: "Today",
+    lastUpdated: new Date("2026-07-21"), // Set the actual last update date
     readTime: "5 min",
   },
 };
+
+// Function to calculate relative time
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) return "Today";
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 30) {
+    const weeks = Math.floor(diffInDays / 7);
+    return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
+  }
+  if (diffInDays < 365) {
+    const months = Math.floor(diffInDays / 30);
+    return months === 1 ? "1 month ago" : `${months} months ago`;
+  }
+  const years = Math.floor(diffInDays / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
+}
 
 export const Route = createFileRoute("/guides/$guideId")({
   head: ({ params }) => ({
@@ -67,9 +88,45 @@ function GuideDetailPage() {
               <h1 className="text-[32px] font-bold tracking-tight text-[#000000]">{guide.title}</h1>
               <div className="mt-2 flex items-baseline justify-between gap-4 w-full">
                 <p className="text-[14px] text-[#666666] leading-relaxed max-w-[75%]">{guide.summary}</p>
-                <span className="text-[12px] font-medium text-[#8a90a0] shrink-0 text-right">
-                  Last updated: {guide.updated}
-                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  {guideId === "10-51-procedure" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = document.querySelector('#video-tutorial');
+                        if (target) {
+                          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] bg-[#FF0000] text-white text-[13px] font-semibold hover:bg-[#CC0000] transition-colors cursor-pointer"
+                    >
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                      Video Tutorial
+                    </button>
+                  )}
+                  {guideId === "how-to-process-a-10-15" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = document.querySelector('#video-tutorial');
+                        if (target) {
+                          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] bg-[#FF0000] text-white text-[13px] font-semibold hover:bg-[#CC0000] transition-colors cursor-pointer"
+                    >
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                      Video Tutorial
+                    </button>
+                  )}
+                  <span className="text-[12px] font-medium text-[#8a90a0] text-right">
+                    Last updated: {getRelativeTime(guide.lastUpdated)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -94,7 +151,7 @@ function TrafficStopProcedureGuide() {
         <section id="step-1" className="space-y-4 scroll-mt-8">
           <h2 className="text-[22px] font-bold text-black border-b border-gray-100 pb-2">Step 1: Activate Radar</h2>
           <p className="text-[#4b5563]">
-            Activate the radar system by flexing the <KeyChip>J</KeyChip> muscle. This will display the speed and details of the vehicle ahead.
+            While being inside the vehicle, flex the <KeyChip>J</KeyChip> muscle and press the <strong>"Turn On Radar"</strong> option. This will display the speed and details of the vehicle ahead.
           </p>
         </section>
 
@@ -104,14 +161,43 @@ function TrafficStopProcedureGuide() {
           <p className="text-[#4b5563]">
             If the vehicle is detected speeding, flex <KeyChip>J</KeyChip> again to send a <strong>Stop Notification</strong> and signal the vehicle to pull over. You will give 3 times demands with duration of 5 seconds.
           </p>
+          <ul className="mt-3 space-y-1.5 list-disc pl-5 text-[#4b5563]">
+            <li>City speed limit: <span className="font-semibold text-black">120 mph</span></li>
+            <li>Outside city speed limit: <span className="font-semibold text-black">180 mph</span></li>
+          </ul>
         </section>
 
         {/* Step 3 */}
         <section id="step-3" className="space-y-4 scroll-mt-8">
           <h2 className="text-[22px] font-bold text-black border-b border-gray-100 pb-2">Step 3: Vehicle Stop Compliance</h2>
-          <p className="text-[#4b5563]">
-            Once the driver pulls over, instruct them to <strong>turn off the engine</strong> and <strong>exit the vehicle calmly</strong>.
-          </p>
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-[17px] font-semibold text-black">If the driver pulls over</h3>
+              <p className="mt-1 text-[#4b5563]">
+                Once the driver pulls over, instruct them to <strong>turn off the engine</strong> and <strong>exit the vehicle calmly</strong>.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-[17px] font-semibold text-black">If the driver does not pull over after 3 demands</h3>
+              <p className="mt-1 text-[#4b5563]">
+                Block the driver's engine and assess the situation:
+              </p>
+              <ul className="mt-2 space-y-2 list-disc pl-5 text-[#4b5563]">
+                <li>
+                  <strong className="text-black">If the driver gets out to fight:</strong> Take out your gun and knock him down.
+                </li>
+                <li>
+                  <strong className="text-black">If the driver stays in the vehicle:</strong>
+                  <ul className="mt-1.5 space-y-1 list-disc pl-5">
+                    <li>If the glass/window is not broken: Quickly break the car's window, then tase him with a stun gun.</li>
+                    <li>If the glass is already broken: Directly tase him with a stun gun.</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         {/* Step 4 */}
@@ -130,25 +216,18 @@ function TrafficStopProcedureGuide() {
           <h2 className="text-[22px] font-bold text-black border-b border-gray-100 pb-2">Step 5: Contact Phase</h2>
           
           <div className="space-y-4">
-            <div>
-              <h3 className="text-[17px] font-semibold text-black">5.1 Primary Officer Responsibilities</h3>
-              <p className="mt-1 text-[#4b5563]">
-                Exit your vehicle and update dispatch:
-              </p>
-              <div className="mt-2">
-                <VoiceLine>We are Code 6 now.</VoiceLine>
-              </div>
-              <p className="mt-2 text-[#4b5563]">
-                Approach the driver, explain the reason for the stop, and request their <strong>passport / identification</strong>.
-              </p>
+            <p className="text-[#4b5563]">
+              Exit your vehicle and update dispatch:
+            </p>
+            <div className="mt-2">
+              <VoiceLine>We are Code 6 now.</VoiceLine>
             </div>
-
-            <div>
-              <h3 className="text-[17px] font-semibold text-black">5.2 Supporting Officer Responsibilities</h3>
-              <p className="mt-1 text-[#4b5563]">
-                The assisting unit should place a <strong>barricade</strong> behind the patrol vehicle to secure the scene.
-              </p>
-            </div>
+            <p className="mt-2 text-[#4b5563]">
+              Place a <strong>barricade</strong> behind your patrol vehicle to secure the scene.
+            </p>
+            <p className="mt-2 text-[#4b5563]">
+              Approach the driver, explain the reason for the stop, and request their <strong>passport / identification</strong>.
+            </p>
           </div>
         </section>
 
@@ -157,25 +236,15 @@ function TrafficStopProcedureGuide() {
           <h2 className="text-[22px] font-bold text-black border-b border-gray-100 pb-2">Step 6: Background Verification</h2>
           
           <div className="space-y-4">
-            <div>
-              <h3 className="text-[17px] font-semibold text-black">6.1 Primary Officer</h3>
-              <p className="mt-1 text-[#4b5563]">
-                Examine the identification, then inform:
-              </p>
-              <div className="mt-2">
-                <VoiceLine>Sir, please wait a moment while I check your background.</VoiceLine>
-              </div>
-              <p className="mt-2 text-[#4b5563]">
-                Return to your vehicle and conduct a background check.
-              </p>
+            <p className="text-[#4b5563]">
+              Examine the identification, then inform:
+            </p>
+            <div className="mt-2">
+              <VoiceLine>Sir, please wait a moment while I check your background.</VoiceLine>
             </div>
-
-            <div>
-              <h3 className="text-[17px] font-semibold text-black">6.2 Supporting Officer</h3>
-              <p className="mt-1 text-[#4b5563]">
-                Maintain position near the driver to ensure safety and oversight.
-              </p>
-            </div>
+            <p className="mt-2 text-[#4b5563]">
+              Conduct a background check while maintaining visual oversight of the driver to ensure safety.
+            </p>
           </div>
         </section>
 
@@ -194,7 +263,7 @@ function TrafficStopProcedureGuide() {
             <div>
               <h3 className="text-[17px] font-semibold text-black">7.2 If Violations Are Found</h3>
               <p className="mt-1 text-[#4b5563]">
-                If records indicate criminal activity or repeated speeding offenses, issue a <strong>fine / penalty</strong> according to the <Link to="/patrolman-guide" className="text-[#5863ef] hover:underline font-medium">Patrolman's Guide</Link> and proceed based on department protocol.
+                If records indicate criminal activity or repeated speeding offenses, issue a <strong>fine / penalty</strong> according to the <Link to="/patrolmans-guide" className="text-[#5863ef] hover:underline font-medium">Patrolman's Guide</Link> and proceed based on department protocol.
               </p>
             </div>
           </div>
@@ -218,7 +287,7 @@ function TrafficStopProcedureGuide() {
         <section id="step-9" className="space-y-4 scroll-mt-8">
           <h2 className="text-[22px] font-bold text-black border-b border-gray-100 pb-2">Step 9: Resume Patrol</h2>
           <p className="text-[#4b5563]">
-            The assisting officer removes the barricade, and both units return to regular patrol duties.
+            Remove the barricade and return to regular patrol duties.
           </p>
         </section>
 
@@ -233,23 +302,23 @@ function TrafficStopProcedureGuide() {
           
           <ul className="space-y-3 list-disc pl-5">
             <li>
-              <strong className="text-black">Three Pullover Demands (P.C. 4.2.2)</strong>
+              <strong className="text-black">Three Pullover Demands <span className="text-red-600">(P.C. 4.2.2)</span></strong>
               <p className="text-[14px] text-[#4b5563] mt-1">Always give <strong>3 pullover demands</strong> with a duration of 5 seconds between each demand before blocking the engine.</p>
             </li>
             <li>
-              <strong className="text-black">No Ramming (Car Ramming | Jail 120 min)</strong>
+              <strong className="text-black">No Ramming <span className="text-red-600">(Car Ramming | Jail 120 min)</span></strong>
               <p className="text-[14px] text-[#4b5563] mt-1">Do <strong>not</strong> ram anyone to stop their car, even if you cannot block their engine (e.g., engine blocker on cooldown or person has anti-radar fitted). Always follow proper pullover procedure.</p>
             </li>
             <li>
-              <strong className="text-black">Realistic Barricade Placement (Power Gaming | Jail 120 min)</strong>
+              <strong className="text-black">Realistic Barricade Placement <span className="text-red-600">(Power Gaming | Jail 120 min)</span></strong>
               <p className="text-[14px] text-[#4b5563] mt-1">Do <strong>not</strong> place barricades above or below ground level. Barricades must be placed realistically on the road surface.</p>
             </li>
             <li>
-              <strong className="text-black">Barricade Safety (Power Gaming | Jail 120 min)</strong>
+              <strong className="text-black">Barricade Safety <span className="text-red-600">(Power Gaming | Jail 120 min)</span></strong>
               <p className="text-[14px] text-[#4b5563] mt-1">Do <strong>not</strong> place or remove barricades while holding a firearm.</p>
             </li>
             <li>
-              <strong className="text-black">PDA Usage (Power Gaming | Jail 120 min)</strong>
+              <strong className="text-black">PDA Usage <span className="text-red-600">(Power Gaming | Jail 120 min)</span></strong>
               <p className="text-[14px] text-[#4b5563] mt-1">Do <strong>not</strong> open or operate the PDA while holding a firearm.</p>
             </li>
             <li>
@@ -257,6 +326,29 @@ function TrafficStopProcedureGuide() {
               <p className="text-[14px] text-[#4b5563] mt-1">Do <strong>not</strong> aim or point your weapon at a driver who is cooperating and not posing a threat.</p>
             </li>
           </ul>
+        </section>
+
+        {/* Video Tutorial */}
+        <section id="video-tutorial" className="space-y-4 pt-4 border-t border-gray-100 scroll-mt-8">
+          <h2 className="text-[22px] font-bold text-black">
+            Video Tutorial
+          </h2>
+          <p className="text-gray-600">
+            Watch this video demonstration of the 10-51 procedure:
+          </p>
+          <div className="mt-4 rounded-[12px] overflow-hidden border border-[#e2e5ec] bg-black shadow-lg">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src="https://www.youtube.com/embed/GtnHXY9q-qw"
+                title="Phase 2 10-51 Procedure"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
         </section>
 
       </article>
@@ -624,6 +716,52 @@ function HowToProcessA1015Guide() {
               <p className="text-[14px] text-[#4b5563] mt-1">Your bodycam must be recording before you engage with a 10-15. This protects both you and the suspect during the entire interaction.</p>
             </li>
           </ul>
+        </section>
+
+        {/* Video Tutorial */}
+        <section id="video-tutorial" className="space-y-4 pt-4 border-t border-gray-100 scroll-mt-8">
+          <h2 className="text-[22px] font-bold text-black">
+            Video Tutorial
+          </h2>
+          <p className="text-gray-600">
+            Watch these video demonstrations of the 10-15 arrest procedure:
+          </p>
+          
+          {/* Phase 1 Video */}
+          <div className="mt-4 space-y-2">
+            <h3 className="text-[17px] font-semibold text-black">Introduction To LSPD</h3>
+            <div className="rounded-[12px] overflow-hidden border border-[#e2e5ec] bg-black shadow-lg">
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src="https://www.youtube.com/embed/pAdu6QgpfG8"
+                  title="Phase 1 training video"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Full Procedure Video */}
+          <div className="mt-6 space-y-2">
+            <h3 className="text-[17px] font-semibold text-black">Complete 10-15 Procedure</h3>
+            <div className="rounded-[12px] overflow-hidden border border-[#e2e5ec] bg-black shadow-lg">
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src="https://www.youtube.com/embed/z7aqlXcJh6o"
+                  title="10-15 Procedure"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </div>
         </section>
 
       </article>

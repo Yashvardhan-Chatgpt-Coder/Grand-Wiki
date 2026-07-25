@@ -28,7 +28,7 @@ export function DonateModal({ open, onOpenChange }: DonateModalProps) {
   };
 
   const handleCopyUsername = () => {
-    navigator.clipboard.writeText("billly.butcher");
+    navigator.clipboard.writeText(".yashvardhan.");
     setCopiedUsername(true);
     setTimeout(() => setCopiedUsername(false), 1500);
   };
@@ -106,17 +106,17 @@ export function DonateModal({ open, onOpenChange }: DonateModalProps) {
             {/* Discord Profile Card - Clickable username to copy */}
             <div className="inline-flex items-center gap-4 rounded-[5px] border border-[#2d2d34] bg-[#202024] px-3 py-1.5 shadow-md">
               <div className="flex items-center gap-2.5">
-                <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full overflow-hidden border border-white/10">
+                <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10">
                   <img
-                    src="/Brand/Billy.jpg"
-                    alt="Billy Butcher"
-                    className="h-full w-full object-cover"
+                    src="/Brand/Discord PFP.jpg"
+                    alt="Yashvardhan Chauhan"
+                    className="h-full w-full object-cover rounded-full overflow-hidden"
                   />
-                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-[#202024] bg-emerald-500" />
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#202024] bg-emerald-500" />
                 </div>
                 <div className="flex flex-col">
                   <h4 className="text-[12px] font-bold text-white leading-none">
-                    Billy Butcher
+                    Yashvardhan Chauhan
                   </h4>
                   <button
                     type="button"
@@ -124,7 +124,7 @@ export function DonateModal({ open, onOpenChange }: DonateModalProps) {
                     className="text-left text-[10px] font-medium text-[#888991] hover:text-white transition-colors mt-0.5 flex items-center gap-1 cursor-pointer"
                     title="Click to copy username"
                   >
-                    @billly.butcher
+                    @.yashvardhan.
                     {copiedUsername ? (
                       <Check className="h-2.5 w-2.5 text-emerald-400 inline" />
                     ) : null}

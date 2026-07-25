@@ -86,16 +86,24 @@ export function PhilanthropistsPage() {
         </h2>
 
         <div className="rounded-[10px] border border-[#e2e5ec] bg-white p-5 space-y-3">
-          {donors.map((donor, index) => (
-            <PhilanthropistListItem
-              key={donor.id}
-              rank={index + 1}
-              name={donor.name}
-              server={donor.server}
-              amountLabel={formatDonationAmount(donor.amount)}
-              showDivider={index !== donors.length - 1}
-            />
-          ))}
+          {donors.length > 0 ? (
+            donors.map((donor, index) => (
+              <PhilanthropistListItem
+                key={donor.id}
+                rank={index + 1}
+                name={donor.name}
+                server={donor.server}
+                amountLabel={formatDonationAmount(donor.amount)}
+                showDivider={index !== donors.length - 1}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-[14px] text-[#8a90a0]">
+                {loading ? "Loading supporters..." : "No donations yet. Be the first to support!"}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -5,18 +5,7 @@ export interface Philanthropist {
   server: string;
 }
 
-export const PHILANTHROPISTS: Philanthropist[] = [
-  { id: "p1", name: "Marcus Vale", amount: 2_450_000, server: "EN1" },
-  { id: "p2", name: "Elena Cross", amount: 1_820_000, server: "EN3" },
-  { id: "p3", name: "Jordan Pike", amount: 1_150_000, server: "EN1" },
-  { id: "p4", name: "Sofia Reyes", amount: 980_000, server: "EN3" },
-  { id: "p5", name: "Tyler Nash", amount: 740_000, server: "EN1" },
-  { id: "p6", name: "Aiden Brooks", amount: 620_000, server: "EN3" },
-  { id: "p7", name: "Mia Chen", amount: 510_000, server: "EN1" },
-  { id: "p8", name: "Noah Sterling", amount: 425_000, server: "EN3" },
-  { id: "p9", name: "Liam Ortiz", amount: 380_000, server: "EN1" },
-  { id: "p10", name: "Harper Quinn", amount: 295_000, server: "EN3" },
-];
+export const PHILANTHROPISTS: Philanthropist[] = [];
 
 export function formatDonationAmount(amount: number): string {
   return `$${amount.toLocaleString("en-US")}`;

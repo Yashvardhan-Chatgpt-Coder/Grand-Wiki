@@ -15,10 +15,12 @@ import {
   LogOut,
   UserPlus,
   BookOpen,
+  Users,
 } from "lucide-react";
 import { ProfileSettingsModal } from "./ProfileSettingsModal";
 import { ComingSoonDialog } from "./ComingSoonDialog";
 import { DonateModal } from "./DonateModal";
+import { CreditsModal } from "./CreditsModal";
 import { ThemedConfirmDialog } from "@/components/ui/dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn, optimizeCloudinaryUrl } from "@/lib/utils";
@@ -221,6 +223,7 @@ export function SoftwareHeader({
   const [pinnedComingSoonOpen, setPinnedComingSoonOpen] = useState(false);
   const [upgradeComingSoonOpen, setUpgradeComingSoonOpen] = useState(false);
   const [donateModalOpen, setDonateModalOpen] = useState(false);
+  const [creditsModalOpen, setCreditsModalOpen] = useState(false);
   const [billingComingSoonOpen, setBillingComingSoonOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -513,7 +516,7 @@ export function SoftwareHeader({
         </AnimatePresence>
         <div className="w-[310px] px-1 text-[16px] font-medium text-[#4d5568]">{title}</div>
 
-        <div ref={searchRef} className="relative z-50 w-[405px] max-w-[42vw]">
+        <div ref={searchRef} className="relative z-50 w-[340px] max-w-[38vw]">
           <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
           <input
             ref={searchInputRef}
@@ -629,7 +632,13 @@ export function SoftwareHeader({
         <div className="ml-auto flex items-center gap-4">
           {!isAdmin && (
             <>
-
+              <button
+                onClick={() => setCreditsModalOpen(true)}
+                className="flex h-[34px] cursor-pointer items-center gap-2 rounded-[8px] border border-[#e2e5ec] bg-white px-3 text-[14px] font-medium text-[#000000] hover:bg-[#f7f8fb]"
+              >
+                <Users className="h-4 w-4" />
+                Credits
+              </button>
               <button
                 onClick={() => navigate({ to: "/pinned-commands" })}
                 className="flex h-[34px] cursor-pointer items-center gap-2 rounded-[8px] border border-[#e2e5ec] bg-white px-3 text-[14px] font-medium text-[#000000] hover:bg-[#f7f8fb]"
@@ -874,6 +883,12 @@ export function SoftwareHeader({
         <DonateModal
           open={donateModalOpen}
           onOpenChange={setDonateModalOpen}
+        />
+      )}
+      {!isAdmin && (
+        <CreditsModal
+          open={creditsModalOpen}
+          onOpenChange={setCreditsModalOpen}
         />
       )}
       {!isAdmin && (
