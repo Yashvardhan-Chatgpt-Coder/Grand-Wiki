@@ -627,7 +627,7 @@ export function SoftwareHeader({
             <>
               <button
                 onClick={() => setCreditsModalOpen(true)}
-                className="flex h-[34px] cursor-pointer items-center gap-2 rounded-[8px] border border-[#e2e5ec] bg-white px-3 text-[14px] font-medium text-[#000000] hover:bg-[#f7f8fb]"
+                className="hidden flex h-[34px] cursor-pointer items-center gap-2 rounded-[8px] border border-[#e2e5ec] bg-white px-3 text-[14px] font-medium text-[#000000] hover:bg-[#f7f8fb]"
               >
                 <Users className="h-4 w-4" />
                 Credits
