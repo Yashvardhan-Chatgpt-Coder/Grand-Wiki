@@ -16,6 +16,8 @@ import {
   Users,
   Heart,
   ShieldCheck,
+  Bell,
+  FileText,
   type LucideIcon
 } from "lucide-react";
 import { SidebarCollapseButton } from "@/components/dashboard/SidebarCollapseButton";
@@ -76,13 +78,13 @@ const mainNavConfig: NavItemConfig[] = [
       { title: "Gangs", search: { cat: "gangs" } }
     ]
   },
-  { title: "Pinned Commands", url: "/pinned-commands", icon: Pin }
+  { title: "Pinned Commands", url: "/pinned-commands", icon: Pin },
+  { title: "Server Rules", url: "/server-rules", icon: FileText }
 ];
 
 const adminNavConfig: NavItemConfig[] = [
-  { title: "Users", url: "/admin", search: { tab: "users" }, icon: Users },
   { title: "Philanthropists", url: "/admin", search: { tab: "philanthropists" }, icon: Heart },
-  { title: "Approvals", url: "/admin", search: { tab: "approvals" }, icon: ShieldCheck },
+  { title: "Notifications", url: "/admin", search: { tab: "notifications" }, icon: Bell },
   { title: "Back to Dashboard", url: "/", icon: Home }
 ];
 
@@ -141,7 +143,7 @@ export function AppSidebar() {
     if (isAdminPage) {
       if (item.url === "/") return false;
       const search = location.search as Record<string, string>;
-      const currentTab = search.tab || "users";
+      const currentTab = search.tab || "philanthropists";
       return item.search?.tab === currentTab;
     }
     if (item.url === "/") return path === "/";

@@ -116,7 +116,7 @@
 }
 
 .dark {
-  /* Dark mode palette rules: pure black (#000000) base, #131416 secondary, #888991 default muted text, #121213 hover bg, #ffffff hover text */
+  /* Dark mode palette rules: pure black (#000000) base, text default #888991, hover bg #121213, hover text #ffffff */
   --background: #000000;
   --foreground: #ffffff;
   --card: #000000;
@@ -125,9 +125,9 @@
   --popover-foreground: #ffffff;
   --primary: #ffffff;
   --primary-foreground: #000000;
-  --secondary: #131416;
+  --secondary: #000000;
   --secondary-foreground: #ffffff;
-  --muted: #131416;
+  --muted: #000000;
   --muted-foreground: #888991;
   --accent: #121213;
   --accent-foreground: #ffffff;
@@ -423,7 +423,7 @@
 }
 
 /*
- * Dark theme rules — #ffffff -> #000000, #f7f8fb -> #131416, text default #888991, hover bg #121213, hover text #ffffff.
+ * Dark theme rules — #ffffff -> #000000, #f7f8fb -> #000000, text default #888991, hover bg #121213, hover text #ffffff.
  */
 
 @layer base {
@@ -492,11 +492,11 @@ html.dark [class~="bg-[#ffffff]"] {
   background-color: #000000 !important;
 }
 
-/* #f7f8fb / #f7f6fb -> #131416 */
+/* #f7f8fb / #f7f6fb -> #000000 */
 html.dark [class~="bg-[#f7f8fb]"],
 html.dark [class~="bg-[#f7f6fb]"],
 html.dark [class~="bg-zinc-50"] {
-  background-color: #131416 !important;
+  background-color: #000000 !important;
 }
 
 html.dark [class~="bg-[#f9fbfc]"],
@@ -504,7 +504,7 @@ html.dark [class~="bg-[#f7fbff]"],
 html.dark [class~="bg-[#f4f6fa]"],
 html.dark [class~="bg-[#f4f5f7]"],
 html.dark [class~="bg-[#f3f5f8]"] {
-  background-color: #131416 !important;
+  background-color: #000000 !important;
 }
 
 html.dark [class~="bg-[#fcfdfd]"],
@@ -519,7 +519,7 @@ html.dark [class~="bg-[#f3f4f6]"] {
 html.dark [class~="bg-[#f0f1f3]"],
 html.dark [class~="bg-[#edf2f8]"],
 html.dark [class~="bg-zinc-100"] {
-  background-color: #131416 !important;
+  background-color: #000000 !important;
 }
 
 html.dark [class~="bg-[#eef0f4]"],
@@ -612,6 +612,28 @@ html.dark [class~="active:bg-[#f3f4f6]"]:active {
 
 html.dark [class~="disabled:bg-[#f7f8fb]"]:disabled {
   background-color: #131416 !important;
+}
+
+/* ——— Checkboxes ——— */
+html.dark input[type="checkbox"] {
+  background-color: #2a2b2e !important;
+  border-color: #5a5b5e !important;
+  border-width: 1.5px !important;
+}
+
+html.dark input[type="checkbox"]:checked {
+  background-color: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* ——— Guides borders ——— */
+html.dark .border-gray-100 {
+  border-color: #2a2b2e !important;
+}
+
+html.dark .border-gray-200 {
+  border-color: #222326 !important;
 }
 
 /* ——— Text (default options color: #888991, hover text: #ffffff) ——— */
@@ -744,11 +766,10 @@ html.dark [class~="bg-[#fefce8]/40"] {
   background-color: #242014 !important;
 }
 
-html.dark [class~="bg-[#eff6ff]"],
 html.dark [class~="bg-[#eff6ff]/40"],
 html.dark [class~="bg-[#eff6ff]/35"],
 html.dark [class~="hover:bg-[#dbeafe]"]:hover {
-  background-color: #131416 !important;
+  background-color: #000000 !important;
 }
 
 html.dark [class~="border-[#fef08a]"] {
@@ -938,11 +959,10 @@ html.dark [class~="bg-[#fefce8]/40"] {
   background-color: #242014 !important;
 }
 
-html.dark [class~="bg-[#eff6ff]"],
 html.dark [class~="bg-[#eff6ff]/40"],
 html.dark [class~="bg-[#eff6ff]/35"],
 html.dark [class~="hover:bg-[#dbeafe]"]:hover {
-  background-color: #131416 !important;
+  background-color: #000000 !important;
 }
 
 html.dark [class~="border-[#fef08a]"] {

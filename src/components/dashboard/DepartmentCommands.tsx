@@ -46,10 +46,29 @@ type Recipient = (typeof RECIPIENT_OPTIONS)[number];
 
 const DEFAULT_RECIPIENT: Recipient = "LAST";
 
+const RECIPIENT_LOCATIONS: Record<string, string> = {
+  LAST: "your HQ",
+  NG: "the main barracks",
+  GOV: "the capital",
+  DOT: "the capital",
+  DOP: "the capital",
+  DOJ: "the capital",
+  DOL: "the capital",
+  DOC: "DOC",
+  EMS: "Pillbox hospital",
+  FIB: "your HQ",
+  SAHP: "your HQ",
+  LSPD: "your HQ",
+};
+
 const RECIPIENT_SELECT_OPTIONS = RECIPIENT_OPTIONS.map((option) => ({
   label: option,
   value: option,
 }));
+
+function getRecipientLocation(recipient: string): string {
+  return RECIPIENT_LOCATIONS[recipient.toUpperCase()] || "the location";
+}
 
 function applyRecipient(text: string, recipient: string): string {
   return text.replace(/\bto\s+[^:]+:/i, `to ${recipient}:`);
@@ -375,6 +394,27 @@ const DEPARTMENT_CATEGORIES: CommandCategory[] = [
       },
     ],
   },
+  {
+    title: "NG",
+    groups: [
+      {
+        title: "Candies Supply Depleted",
+        commands: [
+          {
+            text: "NG to LAST: 10-4. However, if this is related to candies, we are currently at zero supply.",
+          },
+        ],
+      },
+      {
+        title: "Vehicle Theft - Exfiltration Assistance",
+        commands: [
+          {
+            text: "NG to LAST: Some of our trucks have been stolen. Requesting assistance with exfiltration.",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -395,7 +435,7 @@ export function DepartmentCommands() {
     ? organization.toUpperCase() === "GOVERNMENT" ? "GOV" : organization.toUpperCase()
     : "LSPD";
 
-  const applyRecipientLocal = useCallback((text: string, recipient: string): string => {
+  const applyRecipientLocal = useCallback((text: string, recipient: string, groupTitle: string): string => {
     // Determine which prefix to use based on selected category
     let commandPrefix = prefix; // Default to user's org for Generic/Events
     
@@ -405,8 +445,18 @@ export function DepartmentCommands() {
     }
     
     // Replaces 'LSPD to' or similar with appropriate prefix
-    const withPrefix = text.replace(/^[A-Za-z0-9\s]+to\b/i, `${commandPrefix} to`);
-    return withPrefix.replace(/\bto\s+[^:]+:/i, `to ${recipient}:`);
+    let result = text.replace(/^[A-Za-z0-9\s]+to\b/i, `${commandPrefix} to`);
+    
+    // Replace the recipient (to LAST: -> to NG:)
+    result = result.replace(/\bto\s+[^:]+:/i, `to ${recipient}:`);
+    
+    // ONLY apply location replacement for Meeting Request commands
+    if ((groupTitle === "Meeting Request" || groupTitle === "Meeting Request Reply") && result.includes(" at ")) {
+      const location = getRecipientLocation(recipient);
+      result = result.replace(/\bat\s+[^.?!]+([.?!])/i, `at ${location}$1`);
+    }
+    
+    return result;
   }, [prefix, selectedCategory]);
 
   const [contextMenu, setContextMenu] = useState<{
@@ -437,7 +487,7 @@ export function DepartmentCommands() {
           const titleMatch = group.title.toLowerCase().includes(q);
           const matchingCommands = group.commands.filter((cmd) => {
             const key = recipientKey(cat.title, group.title, cmd.text);
-            const displayText = applyRecipientLocal(cmd.text, getRecipient(key));
+            const displayText = applyRecipientLocal(cmd.text, getRecipient(key), group.title);
             return (
               cmd.text.toLowerCase().includes(q) ||
               displayText.toLowerCase().includes(q)
@@ -620,7 +670,7 @@ export function DepartmentCommands() {
                           const uniqueId = `${category.title}-${group.title}-${cmdIdx}`;
                           const rKey = recipientKey(category.title, group.title, cmd.text);
                           const recipient = getRecipient(rKey);
-                          const displayText = applyRecipientLocal(cmd.text, recipient);
+                          const displayText = applyRecipientLocal(cmd.text, recipient, group.title);
                           const isCopied = copiedId === uniqueId;
                           const isCmdPinnedState = isCommandPinned(
                             ORG_KEY,

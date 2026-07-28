@@ -18,7 +18,7 @@ function authHeaders(extra?: Record<string, string>): Record<string, string> {
   return headers;
 }
 
-const ONLINE_ROUTE_PREFIXES = ["/auth", "/donations", "/admin", "/support"];
+const ONLINE_ROUTE_PREFIXES = ["/auth", "/donations", "/admin", "/support", "/notifications"];
 
 function shouldUseOffline(path: string): boolean {
   if (import.meta.env.VITE_OFFLINE_MODE === "false") return false;
@@ -1719,3 +1719,54 @@ export const adminApi = {
 export const donationsApi = {
   getPublic: () => request<any[]>("/donations"),
 };
+
+export const notificationsApi = {
+  getActive: () => request<ApiNotification[]>("/notifications"),
+  getAll: () => request<ApiNotification[]>("/notifications/admin/all"),
+  create: (data: {
+    title: string;
+    description: string;
+    icon?: string;
+    stopAfter: number;
+    stopAfterUnit: "Mins" | "Hours" | "Days";
+    color?: string;
+    link?: string;
+    status?: "draft" | "active";
+  }) =>
+    request<ApiNotification>("/notifications", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: Partial<{
+    title: string;
+    description: string;
+    icon: string;
+    stopAfter: number;
+    stopAfterUnit: "Mins" | "Hours" | "Days";
+    color: string;
+    link: string;
+    status: "draft" | "active" | "expired";
+  }>) =>
+    request<ApiNotification>(`/notifications/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  delete: (id: string) =>
+    request<{ message: string }>(`/notifications/${id}`, { method: "DELETE" }),
+};
+
+export interface ApiNotification {
+  _id: string;
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  stopAfter: number;
+  stopAfterUnit: "Mins" | "Hours" | "Days";
+  color: string;
+  link: string;
+  status: "draft" | "active" | "expired";
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const donationRoutes = require("./routes/donations");
 const adminRoutes = require("./routes/admin");
 const supportRoutes = require("./routes/support");
+const notificationRoutes = require("./routes/notifications");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/donations", donationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use("/api", (_req, res) => {
   res.status(404).json({

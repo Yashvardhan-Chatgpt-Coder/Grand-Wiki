@@ -412,9 +412,9 @@ export function FIBCommands({ orgLabel = "FIB", orgKey = "fib" }: OrganizationCo
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-[12px] bg-[#f8f9fa] border border-[#e2e5ec] rounded-[6px] px-3 h-9 font-semibold text-[#4d5568]">
+            <div className="flex items-center gap-1.5 text-[12px] bg-[#f8f9fa] dark:bg-[#1a1b1e] border border-[#e2e5ec] dark:border-[#2a2b2e] rounded-[6px] px-3 h-9 font-semibold text-[#4d5568] dark:text-[#888991]">
               <span>Badge:</span>
-              <span className="font-bold text-black">{effectiveBadge}</span>
+              <span className="font-bold text-black dark:text-white">{effectiveBadge}</span>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">

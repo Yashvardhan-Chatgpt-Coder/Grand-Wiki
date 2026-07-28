@@ -67,20 +67,20 @@ function GuideDetailPage() {
 
   return (
     <OrganizerLayout header={<SoftwareHeader title="Guides" />}>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f7f8fb] text-[#000000]">
-        <header className="shrink-0 bg-white px-8 py-6">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#f7f8fb] dark:bg-black text-[#000000] dark:text-white">
+        <header className="shrink-0 bg-white dark:bg-black px-8 py-6 border-b border-[#e2e5ec] dark:border-[#222326]">
           <div className="w-full flex flex-col gap-4">
             <Link
               to="/guides"
-              className="inline-flex w-fit items-center gap-2 text-[13px] font-medium text-[#666666] transition-colors hover:text-[#000000]"
+              className="inline-flex w-fit items-center gap-2 text-[13px] font-medium text-[#666666] dark:text-[#888991] transition-colors hover:text-[#000000] dark:hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to guides
             </Link>
             <div className="w-full">
-              <h1 className="text-[32px] font-bold tracking-tight text-[#000000]">{guide.title}</h1>
+              <h1 className="text-[32px] font-bold tracking-tight text-[#000000] dark:text-white">{guide.title}</h1>
               <div className="mt-2 flex items-baseline justify-between gap-4 w-full">
-                <p className="text-[14px] text-[#666666] leading-relaxed max-w-[75%]">{guide.summary}</p>
+                <p className="text-[14px] text-[#666666] dark:text-[#888991] leading-relaxed max-w-[75%]">{guide.summary}</p>
                 <div className="flex items-center gap-3 shrink-0">
                   <button
                     type="button"
@@ -121,24 +121,24 @@ function IntroductionToLSPDGuide() {
       <article className="flex-1 max-w-3xl prose text-[15px] leading-relaxed text-[#374151] space-y-8">
         
         {/* 10-51 TRAFFIC STOP PROCEDURE */}
-        <div className="pb-8 border-b-2 border-gray-200 space-y-8">
-          <h1 className="text-[28px] font-bold text-black mb-6">10-51 Traffic Stop Procedure</h1>
+        <div className="pb-8 border-b-2 border-gray-200 dark:border-[#222326] space-y-8">
+          <h1 className="text-[28px] font-bold text-black dark:text-white mb-6">10-51 Traffic Stop Procedure</h1>
           
           {/* Step 1 */}
           <section id="step-1" className="space-y-4 scroll-mt-8">
-            <h2 className="text-[22px] font-semibold text-black border-b border-gray-100 pb-2">Step 1: Activate Radar</h2>
-            <p className="text-[#4b5563]">
+            <h2 className="text-[22px] font-semibold text-black dark:text-white border-b border-gray-100 dark:border-[#2a2b2e] pb-2">Step 1: Activate Radar</h2>
+            <p className="text-[#4b5563] dark:text-[#a0a5b1]">
               While being inside the vehicle, flex the <KeyChip>J</KeyChip> muscle and press the <strong>"Turn On Radar"</strong> option. This will display the speed and details of the vehicle ahead.
             </p>
           </section>
 
           {/* Step 2 */}
           <section id="step-2" className="space-y-4 scroll-mt-8">
-            <h2 className="text-[22px] font-semibold text-black border-b border-gray-100 pb-2">Step 2: Issue Stop Notification</h2>
-            <p className="text-[#4b5563]">
+            <h2 className="text-[22px] font-semibold text-black dark:text-white border-b border-gray-100 dark:border-[#2a2b2e] pb-2">Step 2: Issue Stop Notification</h2>
+            <p className="text-[#4b5563] dark:text-[#a0a5b1]">
               If the vehicle is detected speeding, flex <KeyChip>J</KeyChip> again to send a <strong>Stop Notification</strong> and signal the vehicle to pull over. You will give 3 times demands with duration of 5 seconds.
             </p>
-            <ul className="mt-3 space-y-2.5 list-disc pl-5 text-[#4b5563]">
+            <ul className="mt-3 space-y-2.5 list-disc pl-5 text-[#4b5563] dark:text-[#a0a5b1]">
               <li>City speed limit: <span className="font-semibold text-black">120 mph</span></li>
               <li>Outside city speed limit: <span className="font-semibold text-black">180 mph</span></li>
             </ul>
@@ -779,7 +779,7 @@ function IntroductionToLSPDGuide() {
 // Utility Components
 function VoiceLine({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[8px] border-l-[3px] border-l-[#2563eb] bg-[#eff6ff] px-3 py-2 text-[13px] font-medium leading-6 text-[#1e40af] w-fit max-w-full">
+    <div className="rounded-[8px] border-l-[3px] border-l-[#2563eb] dark:border-l-[#3b82f6] bg-[#eff6ff] dark:bg-[#06101f] px-3 py-2 text-[13px] font-medium leading-6 text-[#1e40af] dark:text-[#60a5fa] w-fit max-w-full">
       <Mic2 className="mr-2 inline h-4 w-4 shrink-0" />
       "{children}"
     </div>
@@ -796,7 +796,7 @@ function CommandLine({ children }: { children: ReactNode }) {
 
 function KeyChip({ children }: { children: ReactNode }) {
   return (
-    <kbd className="mx-1 inline-flex h-6 min-w-[24px] items-center justify-center rounded-[5px] border border-[#cbd5e1] bg-white px-1.5 font-mono text-[11.5px] font-bold text-[#0f172a] shadow-[2.5px_2.5px_0_#000000] select-none">
+    <kbd className="mx-1 inline-flex h-6 min-w-[24px] items-center justify-center rounded-[5px] border border-[#cbd5e1] dark:border-[#3a3b3e] bg-white dark:bg-[#2a2b2e] px-1.5 font-mono text-[11.5px] font-bold text-[#0f172a] dark:text-[#e2e8f0] shadow-[2.5px_2.5px_0_#000000] dark:shadow-[2.5px_2.5px_0_#4a4b4e] select-none">
       {children}
     </kbd>
   );

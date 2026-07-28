@@ -49,20 +49,20 @@ export function AppSearchSelect({
           <button
             type="button"
             disabled={disabled}
-            className={`flex w-full cursor-pointer items-center justify-between rounded-[6px] border border-[#e2e5ec] bg-white text-[13px] font-normal text-[#000000] outline-none transition-all duration-200 hover:border-[#b0b7c3] focus:border-[#000000] disabled:cursor-not-allowed disabled:bg-[#f4f6fa] disabled:text-[#9aa1b0] ${
+            className={`flex w-full cursor-pointer items-center justify-between rounded-[6px] border border-[#e2e5ec] bg-white dark:bg-black dark:border-[#222326] text-[13px] font-normal text-[#000000] dark:text-white outline-none transition-all duration-200 hover:border-[#b0b7c3] dark:hover:border-[#3a3b3e] focus:border-[#000000] dark:focus:border-white disabled:cursor-not-allowed disabled:bg-[#f4f6fa] dark:disabled:bg-[#121213] disabled:text-[#9aa1b0] dark:disabled:text-[#666] ${
               compact ? "h-8 px-2.5" : "h-9 px-3"
             }`}
           >
             <span
               className={`flex min-w-0 items-center ${compact ? "gap-1.5" : "gap-2"} ${
-                selectedOption ? "text-[#000000]" : "text-[#9aa1b0]"
+                selectedOption ? "text-[#000000] dark:text-white" : "text-[#9aa1b0] dark:text-[#666]"
               }`}
             >
               {selectedOption?.icon}
               <span className="truncate">{selectedOption?.label ?? placeholder}</span>
             </span>
             <ChevronDown
-              className={`h-4 w-4 text-[#9aa1b0] transition-transform duration-200 ${
+              className={`h-4 w-4 text-[#9aa1b0] dark:text-[#666] transition-transform duration-200 ${
                 open ? "rotate-180" : ""
               }`}
             />
@@ -86,23 +86,23 @@ export function AppSearchSelect({
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   onWheel={(event) => event.stopPropagation()}
                   onTouchMove={(event) => event.stopPropagation()}
-                  className="w-[var(--radix-popover-trigger-width)] min-w-[180px] overflow-hidden rounded-[8px] border border-[#e2e5ec] bg-white shadow-xl"
+                  className="w-[var(--radix-popover-trigger-width)] min-w-[180px] overflow-hidden rounded-[8px] border border-[#e2e5ec] dark:border-[#222326] bg-white dark:bg-black shadow-xl"
                 >
-                  <Command label="Search options" className="flex flex-col h-full bg-white">
-                    <div className="flex items-center border-b border-[#f0f1f3] px-3">
-                      <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-[#9aa1b0]" />
+                  <Command label="Search options" className="flex flex-col h-full bg-white dark:bg-black">
+                    <div className="flex items-center border-b border-[#f0f1f3] dark:border-[#222326] px-3">
+                      <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-[#9aa1b0] dark:text-[#666]" />
                       <Command.Input
                         placeholder="Search..."
                         data-no-style
                         value={searchValue}
                         onValueChange={setSearchValue}
-                        className="h-9 w-full border-none bg-transparent text-[13px] text-[#000000] outline-none placeholder:text-[#9aa1b0]"
+                        className="h-9 w-full border-none bg-transparent text-[13px] text-[#000000] dark:text-white outline-none placeholder:text-[#9aa1b0] dark:placeholder:text-[#666]"
                       />
                       {searchValue && (
                         <button
                           type="button"
                           onClick={() => setSearchValue("")}
-                          className="shrink-0 text-[#9aa1b0] transition-colors hover:cursor-pointer hover:text-[#000000]"
+                          className="shrink-0 text-[#9aa1b0] dark:text-[#666] transition-colors hover:cursor-pointer hover:text-[#000000] dark:hover:text-white"
                           aria-label="Clear search"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -110,7 +110,7 @@ export function AppSearchSelect({
                       )}
                     </div>
                     <Command.List className="max-h-[220px] overflow-y-auto p-1 text-[13px]">
-                      <Command.Empty className="py-4 text-center text-[12px] text-[#9aa1b0]">
+                      <Command.Empty className="py-4 text-center text-[12px] text-[#9aa1b0] dark:text-[#666]">
                         No results found.
                       </Command.Empty>
                       {options.map((option) => (
@@ -121,14 +121,14 @@ export function AppSearchSelect({
                             onChange(option.value);
                             setOpen(false);
                           }}
-                          className="flex w-full cursor-pointer items-center justify-between rounded-[4px] px-2.5 py-1.5 text-[13px] font-medium text-[#1f2937] outline-none transition-colors hover:bg-[#f3f4f6] hover:text-[#000000] data-[selected='true']:bg-[#f3f4f6] data-[selected='true']:text-[#000000]"
+                          className="flex w-full cursor-pointer items-center justify-between rounded-[4px] px-2.5 py-1.5 text-[13px] font-medium text-[#1f2937] dark:text-[#ffffff] outline-none transition-colors hover:bg-[#f3f4f6] dark:hover:bg-[#121213] hover:text-[#000000] dark:hover:text-white data-[selected='true']:bg-[#f3f4f6] dark:data-[selected='true']:bg-[#121213] data-[selected='true']:text-[#000000] dark:data-[selected='true']:text-white"
                         >
                           <div className="flex min-w-0 items-center gap-2">
                             {option.icon}
                             <span className="truncate">{option.label}</span>
                           </div>
                           {value === option.value && (
-                            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#000000]" />
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#000000] dark:text-white" />
                           )}
                         </Command.Item>
                       ))}

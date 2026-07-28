@@ -3,10 +3,11 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { queue } from "@/components/ui/Toast";
 import { authApi, getStoredUser, persistUser } from "@/lib/api";
+import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [{ title: "Admin Login | Grand Wiki" }],
+    meta: [{ title: "Admin Panel | Grand Wiki" }],
   }),
   beforeLoad: () => {
     if (typeof window === "undefined") return;
@@ -14,13 +15,31 @@ export const Route = createFileRoute("/admin")({
     const token = localStorage.getItem("token") || user?.token;
     if (token && user) {
       const isAdmin = user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().includes("admin");
-      if (isAdmin) {
+      // If user is admin, they should see the dashboard, not get redirected
+      if (!isAdmin) {
+        // Only non-admins should be redirected away
         throw redirect({ to: "/" });
       }
+    } else {
+      // No user logged in, show login page
+      return;
     }
   },
-  component: AdminLogin,
+  component: AdminPage,
 });
+
+function AdminPage() {
+  const user = getStoredUser();
+  const isAdmin = user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().includes("admin");
+  
+  // If admin is logged in, show dashboard
+  if (isAdmin && user) {
+    return <AdminDashboard />;
+  }
+  
+  // Otherwise show login page
+  return <AdminLogin />;
+}
 
 function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -34,7 +53,8 @@ function AdminLogin() {
     const token = localStorage.getItem("token") || user?.token;
     if (token && user) {
       const isAdmin = user?.role === "admin" || user?.role === "ADMIN" || user?.email?.toLowerCase().includes("admin");
-      if (isAdmin) {
+      if (!isAdmin) {
+        // Non-admins shouldn't be on admin login page
         navigate({ to: "/", replace: true });
       }
     }

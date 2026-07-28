@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VehicleTicketingRouteImport } from './routes/vehicle-ticketing'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ServerRulesRouteImport } from './routes/server-rules'
 import { Route as QnaRouteImport } from './routes/qna'
 import { Route as PinnedCommandsRouteImport } from './routes/pinned-commands'
 import { Route as PhilanthropistsRouteImport } from './routes/philanthropists'
@@ -33,6 +34,11 @@ const VehicleTicketingRoute = VehicleTicketingRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServerRulesRoute = ServerRulesRouteImport.update({
+  id: '/server-rules',
+  path: '/server-rules',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QnaRoute = QnaRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/philanthropists': typeof PhilanthropistsRoute
   '/pinned-commands': typeof PinnedCommandsRoute
   '/qna': typeof QnaRoute
+  '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/philanthropists': typeof PhilanthropistsRoute
   '/pinned-commands': typeof PinnedCommandsRoute
   '/qna': typeof QnaRoute
+  '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/philanthropists': typeof PhilanthropistsRoute
   '/pinned-commands': typeof PinnedCommandsRoute
   '/qna': typeof QnaRoute
+  '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/philanthropists'
     | '/pinned-commands'
     | '/qna'
+    | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
     | '/guides/$guideId'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/philanthropists'
     | '/pinned-commands'
     | '/qna'
+    | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
     | '/guides/$guideId'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/philanthropists'
     | '/pinned-commands'
     | '/qna'
+    | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
     | '/guides/$guideId'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   PhilanthropistsRoute: typeof PhilanthropistsRoute
   PinnedCommandsRoute: typeof PinnedCommandsRoute
   QnaRoute: typeof QnaRoute
+  ServerRulesRoute: typeof ServerRulesRoute
   SignupRoute: typeof SignupRoute
   VehicleTicketingRoute: typeof VehicleTicketingRoute
 }
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/server-rules': {
+      id: '/server-rules'
+      path: '/server-rules'
+      fullPath: '/server-rules'
+      preLoaderRoute: typeof ServerRulesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/qna': {
@@ -358,6 +378,7 @@ const rootRouteChildren: RootRouteChildren = {
   PhilanthropistsRoute: PhilanthropistsRoute,
   PinnedCommandsRoute: PinnedCommandsRoute,
   QnaRoute: QnaRoute,
+  ServerRulesRoute: ServerRulesRoute,
   SignupRoute: SignupRoute,
   VehicleTicketingRoute: VehicleTicketingRoute,
 }

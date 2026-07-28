@@ -149,6 +149,11 @@ const SIDEBAR_SEARCH_DATA = [
     title: "Pinned Commands",
     url: "/pinned-commands",
     icon: "Pin"
+  },
+  {
+    title: "Server Rules",
+    url: "/server-rules",
+    icon: "FileText"
   }
 ];
 
@@ -235,8 +240,92 @@ export function SoftwareHeader({
       time: string;
       type: string;
       unread: boolean;
+      icon: string;
+      color: string;
+      link: string;
     }>
   >([]);
+
+  const [showNewNotifTooltip, setShowNewNotifTooltip] = useState(false);
+  const [newNotifCount, setNewNotifCount] = useState(0);
+  const notificationBellRef = useRef<HTMLButtonElement>(null);
+  const previousNotificationIdsRef = useRef<string[]>([]);
+
+  // Load notifications from API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const { notificationsApi } = await import("@/lib/api");
+        const activeNotifications = await notificationsApi.getActive();
+        
+        console.log("[NOTIF FETCH] Fetched:", activeNotifications.length, "notifications");
+        
+        // Get read notifications from localStorage
+        const readNotifs = JSON.parse(localStorage.getItem("grand_wiki_read_notifications") || "[]") as string[];
+        
+        // Check if there are new notifications (not in previous state)
+        const previousIds = previousNotificationIdsRef.current;
+        const newNotifications = activeNotifications.filter(n => !previousIds.includes(n._id));
+        
+        console.log("[NOTIF CHECK] Previous IDs:", previousIds.length, "New notifications:", newNotifications.length);
+        
+        // Map API notifications to display format
+        const mappedNotifications = activeNotifications.map((notif) => {
+          const createdAt = new Date(notif.createdAt);
+          const now = new Date();
+          const diffMinutes = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+          
+          let timeAgo = "";
+          if (diffMinutes < 1) timeAgo = "Just now";
+          else if (diffMinutes < 60) timeAgo = `${diffMinutes}m ago`;
+          else if (diffMinutes < 1440) timeAgo = `${Math.floor(diffMinutes / 60)}h ago`;
+          else timeAgo = `${Math.floor(diffMinutes / 1440)}d ago`;
+          
+          return {
+            id: notif._id,
+            title: notif.title,
+            description: notif.description,
+            time: timeAgo,
+            type: "system",
+            unread: !readNotifs.includes(notif._id),
+            icon: notif.icon,
+            color: notif.color,
+            link: notif.link,
+          };
+        });
+        
+        setNotifications(mappedNotifications);
+        
+        // Show tooltip if there are new unread notifications (only after first load)
+        if (newNotifications.length > 0 && previousIds.length > 0) {
+          const unreadNew = newNotifications.filter(n => !readNotifs.includes(n._id));
+          console.log("[NOTIF TOOLTIP] Unread new:", unreadNew.length);
+          if (unreadNew.length > 0) {
+            setNewNotifCount(unreadNew.length);
+            setShowNewNotifTooltip(true);
+            console.log("[NOTIF TOOLTIP] Showing tooltip for", unreadNew.length, "new notifications");
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+              setShowNewNotifTooltip(false);
+              console.log("[NOTIF TOOLTIP] Hiding tooltip");
+            }, 5000);
+          }
+        }
+        
+        // Update previous IDs reference
+        previousNotificationIdsRef.current = activeNotifications.map(n => n._id);
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+      }
+    };
+    
+    fetchNotifications();
+    
+    // Check for new notifications every 30 seconds (real-time)
+    const interval = setInterval(fetchNotifications, 30 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
@@ -351,12 +440,35 @@ export function SoftwareHeader({
     }
   };
 
-  const toggleRead = (id: string) => {
+  const toggleRead = (id: string, link?: string) => {
+    // Mark as read in state
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+    
+    // Store in localStorage
+    const readNotifs = JSON.parse(localStorage.getItem("grand_wiki_read_notifications") || "[]") as string[];
+    if (!readNotifs.includes(id)) {
+      readNotifs.push(id);
+      localStorage.setItem("grand_wiki_read_notifications", JSON.stringify(readNotifs));
+    }
+    
+    // Navigate to link if provided
+    if (link) {
+      setNotifOpen(false);
+      if (link.startsWith("http")) {
+        window.open(link, "_blank");
+      } else {
+        navigate({ to: link });
+      }
+    }
   };
 
   const markAllAsRead = () => {
+    const allIds = notifications.map(n => n.id);
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    
+    // Store all in localStorage
+    localStorage.setItem("grand_wiki_read_notifications", JSON.stringify(allIds));
+    
     queue.add(
       {
         title: "Notifications",
@@ -388,6 +500,10 @@ export function SoftwareHeader({
 
   useEffect(() => {
     if (!notifOpen) return;
+    
+    // Hide the tooltip when dropdown opens
+    setShowNewNotifTooltip(false);
+    
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
@@ -443,34 +559,56 @@ export function SoftwareHeader({
     return () => window.removeEventListener("keydown", handleShortcut);
   }, [enableGlobalSearch]);
 
-  const getNotifIcon = (type: string) => {
-    switch (type) {
-      case "match":
-        return Swords;
-      case "registration":
-        return UserPlus;
-      case "system":
-        return Database;
-      case "promotion":
-        return Sparkles;
-      default:
-        return Bell;
+  // Get dynamic icon component from SVG data URL or lucide icon name
+  const getDynamicIcon = (iconData: string) => {
+    // If it's a base64 data URL, decode and return component
+    if (iconData && iconData.startsWith('data:image/svg+xml;base64,')) {
+      return ({ className }: { className?: string }) => {
+        try {
+          const base64Data = iconData.replace('data:image/svg+xml;base64,', '');
+          const decodedSvg = atob(base64Data);
+          return (
+            <div 
+              className={className}
+              dangerouslySetInnerHTML={{ __html: decodedSvg }}
+            />
+          );
+        } catch (e) {
+          return <Bell className={className} />;
+        }
+      };
+    }
+    // If it's SVG code, return a component that renders it
+    if (iconData && iconData.includes('<svg')) {
+      return ({ className }: { className?: string }) => (
+        <div 
+          className={className}
+          dangerouslySetInnerHTML={{ __html: iconData }}
+        />
+      );
+    }
+    // Fallback to Lucide icon by name
+    try {
+      const LucideIcons = require("lucide-react");
+      const IconComponent = LucideIcons[iconData];
+      return IconComponent || LucideIcons.Bell;
+    } catch {
+      return Bell;
     }
   };
 
-  const getNotifIconBg = (type: string) => {
-    switch (type) {
-      case "match":
-        return "bg-amber-50 text-amber-600";
-      case "registration":
-        return "bg-emerald-50 text-emerald-600";
-      case "system":
-        return "bg-rose-50 text-rose-600";
-      case "promotion":
-        return "bg-zinc-100 text-zinc-800";
-      default:
-        return "bg-gray-50 text-[#666666]";
-    }
+  const getNotifIconBg = (color: string) => {
+    const colorMap: Record<string, string> = {
+      blue: "bg-blue-100 text-blue-600",
+      green: "bg-green-100 text-green-600",
+      red: "bg-red-100 text-red-600",
+      yellow: "bg-yellow-100 text-yellow-600",
+      purple: "bg-purple-100 text-purple-600",
+      pink: "bg-pink-100 text-pink-600",
+      indigo: "bg-indigo-100 text-indigo-600",
+      orange: "bg-orange-100 text-orange-600",
+    };
+    return colorMap[color] || "bg-gray-100 text-gray-600";
   };
 
   return (
@@ -655,6 +793,7 @@ export function SoftwareHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
+                    ref={notificationBellRef}
                     onClick={() => setNotifOpen(!notifOpen)}
                     className={cn(
                       "relative grid h-[34px] w-[34px] cursor-pointer place-items-center rounded-[5px] text-[#303646] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]",
@@ -672,6 +811,35 @@ export function SoftwareHeader({
                 <TooltipContent side="bottom">Notifications</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {/* New Notification Tooltip Popup */}
+            <AnimatePresence>
+              {showNewNotifTooltip && !notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="absolute right-0 top-[42px] z-[115] w-[260px] rounded-[10px] border border-[#e2e5ec] bg-white px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.15)]"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-full bg-blue-100 p-2 shrink-0">
+                      <Bell className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-[#000000] leading-tight">
+                        {newNotifCount === 1 ? "New notification!" : `${newNotifCount} new notifications!`}
+                      </p>
+                      <p className="text-[11px] text-[#8a90a0] mt-1 leading-relaxed">
+                        You have unseen notifications
+                      </p>
+                    </div>
+                  </div>
+                  {/* Small arrow pointing to bell */}
+                  <div className="absolute -top-1 right-3 h-2 w-2 rotate-45 border-l border-t border-[#e2e5ec] bg-white" />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Notification Dropdown Panel */}
             <AnimatePresence>
@@ -708,13 +876,13 @@ export function SoftwareHeader({
                       </div>
                     ) : (
                       notifications.map((notif) => {
-                        const Icon = getNotifIcon(notif.type);
-                        const iconBg = getNotifIconBg(notif.type);
+                        const Icon = getDynamicIcon(notif.icon);
+                        const iconBg = getNotifIconBg(notif.color);
 
                         return (
                           <div
                             key={notif.id}
-                            onClick={() => toggleRead(notif.id)}
+                            onClick={() => toggleRead(notif.id, notif.link)}
                             className={cn(
                               "flex gap-3 p-4 cursor-pointer transition-colors hover:bg-[#f9fbfc]",
                               notif.unread && "bg-[#f8fafc]/60",
@@ -827,6 +995,18 @@ export function SoftwareHeader({
 
                   {/* Menu Items */}
                   <div className="flex flex-col p-1">
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          setProfileOpen(false);
+                          navigate({ to: "/admin" });
+                        }}
+                        className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-medium text-[#4b5563] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]"
+                      >
+                        <Database className="h-4 w-4 shrink-0 text-[#9aa1b0]" />
+                        Admin Panel
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setProfileOpen(false);
