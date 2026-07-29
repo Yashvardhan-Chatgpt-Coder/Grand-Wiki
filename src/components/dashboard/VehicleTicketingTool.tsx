@@ -26,6 +26,7 @@ import {
   type VehicleOcrProgress,
 } from "@/lib/vehicle-screenshot-ocr";
 import { PATROLMAN_GUIDE_DATA } from "@/data/patrolmanGuide";
+import { EN1_PATROLMAN_GUIDE_DATA } from "@/data/patrolmanGuideEN1";
 import { motion } from "framer-motion";
 
 const HIGHLIGHT_STYLES: Record<string, string> = {
@@ -76,7 +77,11 @@ function formatIdentifierLabel(result: VehicleExtractResult) {
   return result.identifierType === "plate" ? "Number plate" : "Vehicle name";
 }
 
-export function VehicleTicketingTool() {
+interface VehicleTicketingToolProps {
+  server?: "en1" | "en2" | "en3";
+}
+
+export function VehicleTicketingTool({ server = "en2" }: VehicleTicketingToolProps = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -146,7 +151,8 @@ export function VehicleTicketingTool() {
 
   const totalFines = useMemo(() => {
     let sum = 0;
-    const allEntries = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries);
+    const dataSource = server === "en1" ? EN1_PATROLMAN_GUIDE_DATA : PATROLMAN_GUIDE_DATA;
+    const allEntries = dataSource.flatMap(a => a.entries);
     Object.entries(selectedCodes).forEach(([code, selected]) => {
       if (selected) {
         const entry = allEntries.find(e => e.code === code);
@@ -156,7 +162,7 @@ export function VehicleTicketingTool() {
       }
     });
     return Math.min(sum, 50000);
-  }, [selectedCodes]);
+  }, [selectedCodes, server]);
 
   const discordLogText = useMemo(() => {
     if (!result) return "";
@@ -175,7 +181,8 @@ export function VehicleTicketingTool() {
 
   const totalStars = useMemo(() => {
     let sum = 0;
-    const allEntries = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries);
+    const dataSource = server === "en1" ? EN1_PATROLMAN_GUIDE_DATA : PATROLMAN_GUIDE_DATA;
+    const allEntries = dataSource.flatMap(a => a.entries);
     Object.entries(selectedCodes).forEach(([code, selected]) => {
       if (selected) {
         const entry = allEntries.find(e => e.code === code);
@@ -187,11 +194,12 @@ export function VehicleTicketingTool() {
       }
     });
     return Math.min(sum, 5);
-  }, [selectedCodes]);
+  }, [selectedCodes, server]);
 
   const applicableLegends = useMemo(() => {
     const list: Array<{ label: string; style: string }> = [];
-    const allEntries = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries);
+    const dataSource = server === "en1" ? EN1_PATROLMAN_GUIDE_DATA : PATROLMAN_GUIDE_DATA;
+    const allEntries = dataSource.flatMap(a => a.entries);
     
     const highlights = new Set<string>();
     Object.entries(selectedCodes).forEach(([code, selected]) => {
@@ -223,7 +231,7 @@ export function VehicleTicketingTool() {
     });
 
     return list;
-  }, [selectedCodes]);
+  }, [selectedCodes, server]);
 
   useEffect(() => {
     prefetchVehicleOcr();
@@ -365,7 +373,8 @@ export function VehicleTicketingTool() {
   const progressPercent = progress?.percent ?? 0;
 
   // Filter for only traffic codes and parking codes (exclude penal / misdemeanor codes)
-  const trafficArticles = PATROLMAN_GUIDE_DATA.filter(
+  const dataSource = server === "en1" ? EN1_PATROLMAN_GUIDE_DATA : PATROLMAN_GUIDE_DATA;
+  const trafficArticles = dataSource.filter(
     (a) => a.type === "traffic" || a.type === "parking"
   );
 
@@ -808,7 +817,7 @@ export function VehicleTicketingTool() {
 
         {/* N/A Recommendation (T.C. 2.1) at the top */}
         {isNaDetected && (() => {
-          const entry = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries).find(e => e.code === "T.C. 2.1");
+          const entry = dataSource.flatMap(a => a.entries).find(e => e.code === "T.C. 2.1");
           if (!entry) return null;
 
           const isSelected = !!selectedCodes[entry.code];

@@ -31,7 +31,8 @@ const ORG_LOGOS: Record<string, string> = {
 };
 
 function OrganizationsPage() {
-  const { org } = Route.useSearch<{ org?: string }>() as { org?: string };
+  const search = Route.useSearch();
+  const { org } = search as { org?: string };
   const orgKey = org?.toLowerCase() || "";
 
   if (orgKey === "department") {

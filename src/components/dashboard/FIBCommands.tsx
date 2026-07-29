@@ -45,15 +45,6 @@ const BASE_CATEGORIES: CommandCategory[] = [
         ],
       },
       {
-        title: "Going as UC (Undercover)",
-        commands: [
-          { text: "/me takes out bodycam and attaches it to belt, hides it, checks its ballistic and water proof" },
-          { text: "/me makes sure it is recording and checks for the red light" },
-          { text: "/do It is recording, is ballistic and water proof" },
-          { text: "/me connects PDA to the nearest cell tower" },
-        ],
-      },
-      {
         title: "Off Duty",
         commands: [
           { text: "/me turns off bodycam" },
@@ -92,23 +83,9 @@ const BASE_CATEGORIES: CommandCategory[] = [
         ],
       },
       {
-        title: "Drone While Undercover",
-        commands: [
-          { text: "/me takes the FIB drone from the trunk and puts it in the backpack" },
-          { text: "/me takes the FIB drone from the backpack and launches it" },
-          { text: "/me takes the FIB drone from the ground and puts it in the backpack" },
-        ],
-      },
-      {
         title: "Drone Activation",
         commands: [
           { text: "/me launches drone" },
-        ],
-      },
-      {
-        title: "Taking Drone Back",
-        commands: [
-          { text: "/me Takes the FIB Drone from the Ground and put it back in backpack" },
         ],
       },
       {
@@ -153,18 +130,56 @@ const BASE_CATEGORIES: CommandCategory[] = [
     ],
   },
   {
-    title: "Taking Evidence",
+    title: "Undercover Operations",
     groups: [
       {
-        title: "When License Plate Not Visible",
+        title: "Going as UC (Undercover)",
+        commands: [
+          { text: "/me takes out bodycam and attaches it to belt, hides it, checks its ballistic and water proof" },
+          { text: "/me makes sure it is recording and checks for the red light" },
+          { text: "/do It is recording, is ballistic and water proof" },
+          { text: "/me connects PDA to the nearest cell tower" },
+        ],
+      },
+      {
+        title: "Drone While Undercover",
+        commands: [
+          { text: "/me takes the FIB drone from the trunk and puts it in the backpack" },
+          { text: "/me takes the FIB drone from the backpack and launches it" },
+          { text: "/me takes the FIB drone from the ground and puts it in the backpack" },
+        ],
+      },
+      {
+        title: "Taking Evidence",
         commands: [
           { text: "/me feels the edges of the vehicle for VIN and checks for ownership" },
         ],
       },
       {
-        title: "When License Plate of Bike Not Visible",
+        title: "Taking Evidence (Bike)",
         commands: [
           { text: "/me checks the VIN from the steering neck of the bike and checks for ownership" },
+        ],
+      },
+      {
+        title: "If You Were Unconscious and Got Patched Up",
+        commands: [
+          { text: "/me checks that the bodycam is still recording" },
+          { text: "/do It is recording" },
+        ],
+      },
+      {
+        title: "Saving a Situation",
+        commands: [
+          { text: "/me saves bodycam footage, uploads it to the FIB Cloud, and continues recording" },
+          { text: "/do The bodycam is recording" },
+        ],
+      },
+      {
+        title: "Refreshing Bodycam",
+        commands: [
+          { text: "/me refreshing bodycam" },
+          { text: "/do The bodycam is recording" },
         ],
       },
     ],
@@ -245,15 +260,7 @@ export function FIBCommands({ orgLabel = "FIB", orgKey = "fib" }: OrganizationCo
   const categoriesToUse = BASE_CATEGORIES.filter((cat) => {
     // Filter FIB-only sections
     if (orgKey !== "fib") {
-      if (cat.title === "Taking Evidence") return false;
-      // Remove "Drone While Undercover" and "Taking Drone Back" groups from "Drone & Radar Operations"
-      if (cat.title === "Drone & Radar Operations") {
-        cat.groups = cat.groups.filter((g) => g.title !== "Drone While Undercover" && g.title !== "Taking Drone Back");
-      }
-      // Remove "Going as UC (Undercover)" group from "Duty & Identification"
-      if (cat.title === "Duty & Identification") {
-        cat.groups = cat.groups.filter((g) => g.title !== "Going as UC (Undercover)");
-      }
+      if (cat.title === "Undercover Operations") return false;
     }
     
     // Filter Government-only sections

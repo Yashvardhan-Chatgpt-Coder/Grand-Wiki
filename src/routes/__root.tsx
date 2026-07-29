@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import { MyToastRegion } from "@/components/ui/Toast";
 import { getStoredUser, type ApiUser } from "@/lib/api";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 const darkThemeOverrideCss = `
 html.dark body{background:#000000!important;color:#ffffff!important}
@@ -193,6 +194,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <GoogleAnalytics />
       <OnboardingGuard pathname={location.pathname} />
       <ThemeClassManager pathname={location.pathname} />
       <Outlet />

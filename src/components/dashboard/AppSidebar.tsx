@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Bell,
   FileText,
+  Building,
   type LucideIcon
 } from "lucide-react";
 import { SidebarCollapseButton } from "@/components/dashboard/SidebarCollapseButton";
@@ -30,7 +31,8 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 
 interface SubItemConfig {
   title: string;
-  search: Record<string, string>;
+  search?: Record<string, string>;
+  url?: string;
 }
 
 interface NavItemConfig {
@@ -44,8 +46,26 @@ interface NavItemConfig {
 const mainNavConfig: NavItemConfig[] = [
   { title: "Home", url: "/", icon: Home },
   { title: "Arrest Procedure Tool", url: "/arrest-procedure", icon: Gavel },
-  { title: "Patrolman's Guide", url: "/patrolmans-guide", icon: BookOpen },
-  { title: "Vehicle Ticketing Tool", url: "/vehicle-ticketing", icon: Ticket },
+  { 
+    title: "Patrolman's Guide", 
+    url: "/patrolmans-guide", 
+    icon: BookOpen,
+    subItems: [
+      { title: "EN #1", search: { server: "en1" } },
+      { title: "EN #2", search: { server: "en2" } },
+      { title: "EN #3", search: { server: "en3" } }
+    ]
+  },
+  { 
+    title: "Vehicle Ticketing Tool", 
+    url: "/vehicle-ticketing/en1", 
+    icon: Ticket,
+    subItems: [
+      { title: "EN #1", url: "/vehicle-ticketing/en1" },
+      { title: "EN #2", url: "/vehicle-ticketing/en2" },
+      { title: "EN #3", url: "/vehicle-ticketing/en3" }
+    ]
+  },
   { title: "Department Radio", url: "/department-radio", icon: Radio },
   {
     title: "Organizations",
@@ -59,6 +79,15 @@ const mainNavConfig: NavItemConfig[] = [
       { title: "Government", search: { org: "government" } },
       { title: "EMS", search: { org: "ems" } },
       { title: "Lifeinvader", search: { org: "lifeinvader" } }
+    ]
+  },
+  {
+    title: "Government",
+    url: "/government/legislation",
+    icon: Building,
+    subItems: [
+      { title: "Legislation", url: "/government/legislation" },
+      { title: "Document Templates", url: "/government/templates" }
     ]
   },
   { title: "Guides", url: "/guides", icon: BookOpen },
@@ -91,12 +120,12 @@ const adminNavConfig: NavItemConfig[] = [
 const SUBMENU_STORAGE_KEY = "grandrp-sidebar-expanded-submenus";
 
 function readExpandedSubmenus(): Record<string, boolean> {
-  if (typeof window === "undefined") return { "Organizations": false, "Questions & Answers": false };
+  if (typeof window === "undefined") return { "Organizations": false, "Questions & Answers": false, "Patrolman's Guide": false, "Vehicle Ticketing Tool": false };
   try {
     const stored = window.localStorage.getItem(SUBMENU_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : { "Organizations": false, "Questions & Answers": false };
+    return stored ? JSON.parse(stored) : { "Organizations": false, "Questions & Answers": false, "Patrolman's Guide": false, "Vehicle Ticketing Tool": false };
   } catch {
-    return { "Organizations": false, "Questions & Answers": false };
+    return { "Organizations": false, "Questions & Answers": false, "Patrolman's Guide": false, "Vehicle Ticketing Tool": false };
   }
 }
 
@@ -119,6 +148,8 @@ export function AppSidebar() {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     "Organizations": false,
     "Questions & Answers": false,
+    "Patrolman's Guide": false,
+    "Vehicle Ticketing Tool": false,
   });
 
   useEffect(() => {
@@ -151,15 +182,22 @@ export function AppSidebar() {
   };
 
   const isSubItemActive = (item: NavItemConfig, subItem: SubItemConfig) => {
+    if (subItem.url) {
+      return path === subItem.url;
+    }
     if (path !== item.url) return false;
     const search = location.search as Record<string, string>;
     if (item.url === "/organizations") {
       const activeOrg = search.org || "lspd";
-      return activeOrg.toLowerCase() === subItem.search.org.toLowerCase();
+      return subItem.search ? activeOrg.toLowerCase() === subItem.search.org.toLowerCase() : false;
+    }
+    if (item.url === "/patrolmans-guide") {
+      const activeServer = search.server || "en2";
+      return subItem.search ? activeServer.toLowerCase() === subItem.search.server.toLowerCase() : false;
     }
     if (item.url === "/qna") {
       const activeCat = search.cat || "general";
-      return activeCat.toLowerCase() === subItem.search.cat.toLowerCase();
+      return subItem.search ? activeCat.toLowerCase() === subItem.search.cat.toLowerCase() : false;
     }
     return false;
   };
@@ -260,14 +298,8 @@ export function AppSidebar() {
                   mainElement
                 )}
 
-                <AnimatePresence initial={false}>
-                  {hasSubItems && isExpanded && !collapsed && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.22, ease: "easeInOut" }}
-                      className="overflow-hidden"
+                {hasSubItems && isExpanded && !collapsed && (
+                    <div className="overflow-hidden"
                     >
                       <div className="pl-8 pr-1 py-1 space-y-0.5 border-l border-[#eef0f5] ml-[27px]">
                         {item.subItems?.map((subItem) => {
@@ -275,7 +307,7 @@ export function AppSidebar() {
                           return (
                             <Link
                               key={subItem.title}
-                              to={item.url}
+                              to={subItem.url || item.url}
                               search={subItem.search}
                               className={cn(
                                 "flex h-7 w-full cursor-pointer items-center rounded-[4px] px-2 text-[12px] transition-all duration-200",
@@ -289,9 +321,8 @@ export function AppSidebar() {
                           );
                         })}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </div>
             );
           })}

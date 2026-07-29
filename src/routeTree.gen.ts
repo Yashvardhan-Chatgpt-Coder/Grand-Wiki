@@ -24,7 +24,14 @@ import { Route as DepartmentRadioRouteImport } from './routes/department-radio'
 import { Route as ArrestProcedureRouteImport } from './routes/arrest-procedure'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VehicleTicketingIndexRouteImport } from './routes/vehicle-ticketing/index'
+import { Route as VehicleTicketingEn3RouteImport } from './routes/vehicle-ticketing/en3'
+import { Route as VehicleTicketingEn2RouteImport } from './routes/vehicle-ticketing/en2'
+import { Route as VehicleTicketingEn1RouteImport } from './routes/vehicle-ticketing/en1'
 import { Route as GuidesGuideIdRouteImport } from './routes/guides.$guideId'
+import { Route as GovernmentTemplatesRouteImport } from './routes/government/templates'
+import { Route as GovernmentLegislationRouteImport } from './routes/government/legislation'
+import { Route as GovernmentLawyerCodeRouteImport } from './routes/government/lawyer-code'
 
 const VehicleTicketingRoute = VehicleTicketingRouteImport.update({
   id: '/vehicle-ticketing',
@@ -101,10 +108,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VehicleTicketingIndexRoute = VehicleTicketingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VehicleTicketingRoute,
+} as any)
+const VehicleTicketingEn3Route = VehicleTicketingEn3RouteImport.update({
+  id: '/en3',
+  path: '/en3',
+  getParentRoute: () => VehicleTicketingRoute,
+} as any)
+const VehicleTicketingEn2Route = VehicleTicketingEn2RouteImport.update({
+  id: '/en2',
+  path: '/en2',
+  getParentRoute: () => VehicleTicketingRoute,
+} as any)
+const VehicleTicketingEn1Route = VehicleTicketingEn1RouteImport.update({
+  id: '/en1',
+  path: '/en1',
+  getParentRoute: () => VehicleTicketingRoute,
+} as any)
 const GuidesGuideIdRoute = GuidesGuideIdRouteImport.update({
   id: '/$guideId',
   path: '/$guideId',
   getParentRoute: () => GuidesRoute,
+} as any)
+const GovernmentTemplatesRoute = GovernmentTemplatesRouteImport.update({
+  id: '/government/templates',
+  path: '/government/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentLegislationRoute = GovernmentLegislationRouteImport.update({
+  id: '/government/legislation',
+  path: '/government/legislation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentLawyerCodeRoute = GovernmentLawyerCodeRouteImport.update({
+  id: '/government/lawyer-code',
+  path: '/government/lawyer-code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -122,8 +164,15 @@ export interface FileRoutesByFullPath {
   '/qna': typeof QnaRoute
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
-  '/vehicle-ticketing': typeof VehicleTicketingRoute
+  '/vehicle-ticketing': typeof VehicleTicketingRouteWithChildren
+  '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
+  '/government/legislation': typeof GovernmentLegislationRoute
+  '/government/templates': typeof GovernmentTemplatesRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
+  '/vehicle-ticketing/en1': typeof VehicleTicketingEn1Route
+  '/vehicle-ticketing/en2': typeof VehicleTicketingEn2Route
+  '/vehicle-ticketing/en3': typeof VehicleTicketingEn3Route
+  '/vehicle-ticketing/': typeof VehicleTicketingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,8 +189,14 @@ export interface FileRoutesByTo {
   '/qna': typeof QnaRoute
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
-  '/vehicle-ticketing': typeof VehicleTicketingRoute
+  '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
+  '/government/legislation': typeof GovernmentLegislationRoute
+  '/government/templates': typeof GovernmentTemplatesRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
+  '/vehicle-ticketing/en1': typeof VehicleTicketingEn1Route
+  '/vehicle-ticketing/en2': typeof VehicleTicketingEn2Route
+  '/vehicle-ticketing/en3': typeof VehicleTicketingEn3Route
+  '/vehicle-ticketing': typeof VehicleTicketingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,8 +214,15 @@ export interface FileRoutesById {
   '/qna': typeof QnaRoute
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
-  '/vehicle-ticketing': typeof VehicleTicketingRoute
+  '/vehicle-ticketing': typeof VehicleTicketingRouteWithChildren
+  '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
+  '/government/legislation': typeof GovernmentLegislationRoute
+  '/government/templates': typeof GovernmentTemplatesRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
+  '/vehicle-ticketing/en1': typeof VehicleTicketingEn1Route
+  '/vehicle-ticketing/en2': typeof VehicleTicketingEn2Route
+  '/vehicle-ticketing/en3': typeof VehicleTicketingEn3Route
+  '/vehicle-ticketing/': typeof VehicleTicketingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,7 +242,14 @@ export interface FileRouteTypes {
     | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
+    | '/government/lawyer-code'
+    | '/government/legislation'
+    | '/government/templates'
     | '/guides/$guideId'
+    | '/vehicle-ticketing/en1'
+    | '/vehicle-ticketing/en2'
+    | '/vehicle-ticketing/en3'
+    | '/vehicle-ticketing/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -197,8 +266,14 @@ export interface FileRouteTypes {
     | '/qna'
     | '/server-rules'
     | '/signup'
-    | '/vehicle-ticketing'
+    | '/government/lawyer-code'
+    | '/government/legislation'
+    | '/government/templates'
     | '/guides/$guideId'
+    | '/vehicle-ticketing/en1'
+    | '/vehicle-ticketing/en2'
+    | '/vehicle-ticketing/en3'
+    | '/vehicle-ticketing'
   id:
     | '__root__'
     | '/'
@@ -216,7 +291,14 @@ export interface FileRouteTypes {
     | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
+    | '/government/lawyer-code'
+    | '/government/legislation'
+    | '/government/templates'
     | '/guides/$guideId'
+    | '/vehicle-ticketing/en1'
+    | '/vehicle-ticketing/en2'
+    | '/vehicle-ticketing/en3'
+    | '/vehicle-ticketing/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,7 +316,10 @@ export interface RootRouteChildren {
   QnaRoute: typeof QnaRoute
   ServerRulesRoute: typeof ServerRulesRoute
   SignupRoute: typeof SignupRoute
-  VehicleTicketingRoute: typeof VehicleTicketingRoute
+  VehicleTicketingRoute: typeof VehicleTicketingRouteWithChildren
+  GovernmentLawyerCodeRoute: typeof GovernmentLawyerCodeRoute
+  GovernmentLegislationRoute: typeof GovernmentLegislationRoute
+  GovernmentTemplatesRoute: typeof GovernmentTemplatesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -344,12 +429,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vehicle-ticketing/': {
+      id: '/vehicle-ticketing/'
+      path: '/'
+      fullPath: '/vehicle-ticketing/'
+      preLoaderRoute: typeof VehicleTicketingIndexRouteImport
+      parentRoute: typeof VehicleTicketingRoute
+    }
+    '/vehicle-ticketing/en3': {
+      id: '/vehicle-ticketing/en3'
+      path: '/en3'
+      fullPath: '/vehicle-ticketing/en3'
+      preLoaderRoute: typeof VehicleTicketingEn3RouteImport
+      parentRoute: typeof VehicleTicketingRoute
+    }
+    '/vehicle-ticketing/en2': {
+      id: '/vehicle-ticketing/en2'
+      path: '/en2'
+      fullPath: '/vehicle-ticketing/en2'
+      preLoaderRoute: typeof VehicleTicketingEn2RouteImport
+      parentRoute: typeof VehicleTicketingRoute
+    }
+    '/vehicle-ticketing/en1': {
+      id: '/vehicle-ticketing/en1'
+      path: '/en1'
+      fullPath: '/vehicle-ticketing/en1'
+      preLoaderRoute: typeof VehicleTicketingEn1RouteImport
+      parentRoute: typeof VehicleTicketingRoute
+    }
     '/guides/$guideId': {
       id: '/guides/$guideId'
       path: '/$guideId'
       fullPath: '/guides/$guideId'
       preLoaderRoute: typeof GuidesGuideIdRouteImport
       parentRoute: typeof GuidesRoute
+    }
+    '/government/templates': {
+      id: '/government/templates'
+      path: '/government/templates'
+      fullPath: '/government/templates'
+      preLoaderRoute: typeof GovernmentTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/legislation': {
+      id: '/government/legislation'
+      path: '/government/legislation'
+      fullPath: '/government/legislation'
+      preLoaderRoute: typeof GovernmentLegislationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/lawyer-code': {
+      id: '/government/lawyer-code'
+      path: '/government/lawyer-code'
+      fullPath: '/government/lawyer-code'
+      preLoaderRoute: typeof GovernmentLawyerCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -364,6 +498,23 @@ const GuidesRouteChildren: GuidesRouteChildren = {
 
 const GuidesRouteWithChildren =
   GuidesRoute._addFileChildren(GuidesRouteChildren)
+
+interface VehicleTicketingRouteChildren {
+  VehicleTicketingEn1Route: typeof VehicleTicketingEn1Route
+  VehicleTicketingEn2Route: typeof VehicleTicketingEn2Route
+  VehicleTicketingEn3Route: typeof VehicleTicketingEn3Route
+  VehicleTicketingIndexRoute: typeof VehicleTicketingIndexRoute
+}
+
+const VehicleTicketingRouteChildren: VehicleTicketingRouteChildren = {
+  VehicleTicketingEn1Route: VehicleTicketingEn1Route,
+  VehicleTicketingEn2Route: VehicleTicketingEn2Route,
+  VehicleTicketingEn3Route: VehicleTicketingEn3Route,
+  VehicleTicketingIndexRoute: VehicleTicketingIndexRoute,
+}
+
+const VehicleTicketingRouteWithChildren =
+  VehicleTicketingRoute._addFileChildren(VehicleTicketingRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -380,7 +531,10 @@ const rootRouteChildren: RootRouteChildren = {
   QnaRoute: QnaRoute,
   ServerRulesRoute: ServerRulesRoute,
   SignupRoute: SignupRoute,
-  VehicleTicketingRoute: VehicleTicketingRoute,
+  VehicleTicketingRoute: VehicleTicketingRouteWithChildren,
+  GovernmentLawyerCodeRoute: GovernmentLawyerCodeRoute,
+  GovernmentLegislationRoute: GovernmentLegislationRoute,
+  GovernmentTemplatesRoute: GovernmentTemplatesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

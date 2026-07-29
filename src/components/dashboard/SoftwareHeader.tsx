@@ -569,7 +569,7 @@ export function SoftwareHeader({
           const decodedSvg = atob(base64Data);
           return (
             <div 
-              className={className}
+              className={cn("flex items-center justify-center", className)}
               dangerouslySetInnerHTML={{ __html: decodedSvg }}
             />
           );
@@ -582,7 +582,7 @@ export function SoftwareHeader({
     if (iconData && iconData.includes('<svg')) {
       return ({ className }: { className?: string }) => (
         <div 
-          className={className}
+          className={cn("flex items-center justify-center", className)}
           dangerouslySetInnerHTML={{ __html: iconData }}
         />
       );

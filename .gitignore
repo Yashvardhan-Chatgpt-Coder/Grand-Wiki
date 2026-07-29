@@ -30,6 +30,9 @@ start-esportific.bat
 Seed Scripts/
 Excel Formats/
 
+# PDFs
+public/Legislation/*.pdf
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

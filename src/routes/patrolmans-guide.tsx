@@ -5,6 +5,7 @@ import { OrganizerLayout } from "@/components/dashboard/OrganizerLayout";
 import { SoftwareHeader } from "@/components/dashboard/SoftwareHeader";
 import { cn } from "@/lib/utils";
 import { PATROLMAN_GUIDE_DATA, PENAL_CODE_LEGAL_DESCRIPTIONS } from "@/data/patrolmanGuide";
+import { EN1_PATROLMAN_GUIDE_DATA, EN1_PENAL_CODE_LEGAL_DESCRIPTIONS } from "@/data/patrolmanGuideEN1";
 import { motion } from "framer-motion";
 import { usePageSearchShortcut } from "@/hooks/use-page-search-shortcut";
 
@@ -12,6 +13,11 @@ export const Route = createFileRoute("/patrolmans-guide")({
   head: () => ({
     meta: [{ title: "Patrolman's Guide | Grand Wiki" }],
   }),
+  validateSearch: (search: Record<string, unknown>): { server?: string } => {
+    return {
+      server: typeof search.server === 'string' ? search.server : 'en2',
+    };
+  },
   component: PatrolmansGuidePage,
 });
 
@@ -130,6 +136,37 @@ function renderStars(count: string) {
 type GuideSection = "codes" | "radio" | "illegal-items" | "miranda";
 
 function PatrolmansGuidePage() {
+  const routeSearch = Route.useSearch();
+  const server = routeSearch.server || 'en2';
+
+  // If EN3 is selected, show coming soon message
+  if (server === 'en3') {
+    return (
+      <OrganizerLayout header={<SoftwareHeader title="Patrolman's Guide - EN #3" />}>
+        <div className="flex min-w-0 flex-1 flex-col min-h-0">
+          <main className="min-h-0 flex-1 overflow-y-auto p-8">
+            <div className="mx-auto flex w-full max-w-[1400px] flex-col items-center justify-center gap-6 py-20">
+              <div className="rounded-full bg-[#f0f1f3] p-6">
+                <Info className="h-12 w-12 text-[#8a93a3]" />
+              </div>
+              <div className="text-center">
+                <h2 className="text-[24px] font-bold text-[#000000] dark:text-white">Coming Soon</h2>
+                <p className="mt-2 text-[14px] text-[#666666] dark:text-[#a0a5b1] max-w-[500px]">
+                  EN #3 Patrolman's Guide is currently under development and will be available soon.
+                </p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </OrganizerLayout>
+    );
+  }
+
+  // Select data based on server
+  const currentGuideData = server === 'en1' ? EN1_PATROLMAN_GUIDE_DATA : PATROLMAN_GUIDE_DATA;
+  const currentLegalDescriptions = server === 'en1' ? EN1_PENAL_CODE_LEGAL_DESCRIPTIONS : PENAL_CODE_LEGAL_DESCRIPTIONS;
+
+  // All hooks must be called before any conditional returns
   const [activeGuideSection, setActiveGuideSection] = useState<GuideSection>("codes");
   const [activeTab, setActiveTab] = useState<"penal" | "traffic">("penal");
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,6 +176,31 @@ function PatrolmansGuidePage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   usePageSearchShortcut(searchInputRef);
 
+  // Show placeholder for EN #3 only
+  if (server === 'en3') {
+    return (
+      <OrganizerLayout header={<SoftwareHeader title="Patrolman's Guide" />}>
+        <div className="flex min-w-0 flex-1 flex-col min-h-0 bg-[#f7f8fb] dark:bg-black">
+          <header className="shrink-0 border-b border-[#e7e9f0] dark:border-[#222326] bg-white dark:bg-black px-8 py-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-[30px] font-semibold text-[#000000] dark:text-white">
+                Patrolman's Guide - {server.toUpperCase()}
+              </h1>
+            </div>
+          </header>
+          <main className="min-h-0 flex-1 overflow-y-auto p-8">
+            <div className="flex flex-col items-center justify-center py-20">
+              <p className="text-[16px] text-[#666666] dark:text-[#888991]">
+                Content for {server.toUpperCase()} coming soon.
+              </p>
+            </div>
+          </main>
+        </div>
+      </OrganizerLayout>
+    );
+  }
+
+  // Original content for EN #2
   const toggleCollapse = (title: string) =>
     setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }));
 
@@ -205,7 +267,7 @@ function PatrolmansGuidePage() {
 
   const totalFines = useMemo(() => {
     let sum = 0;
-    const allEntries = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries);
+    const allEntries = currentGuideData.flatMap(a => a.entries);
     Object.entries(selectedCodes).forEach(([code, selected]) => {
       if (selected) {
         const entry = allEntries.find(e => e.code === code);
@@ -215,11 +277,11 @@ function PatrolmansGuidePage() {
       }
     });
     return Math.min(sum, 50000);
-  }, [selectedCodes]);
+  }, [selectedCodes, currentGuideData]);
 
   const totalStars = useMemo(() => {
     let sum = 0;
-    const allEntries = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries);
+    const allEntries = currentGuideData.flatMap(a => a.entries);
     Object.entries(selectedCodes).forEach(([code, selected]) => {
       if (selected) {
         const entry = allEntries.find(e => e.code === code);
@@ -231,11 +293,11 @@ function PatrolmansGuidePage() {
       }
     });
     return Math.min(sum, 5);
-  }, [selectedCodes]);
+  }, [selectedCodes, currentGuideData]);
 
   const applicableLegends = useMemo(() => {
     const list: Array<{ label: string; style: string }> = [];
-    const allEntries = PATROLMAN_GUIDE_DATA.flatMap(a => a.entries);
+    const allEntries = currentGuideData.flatMap(a => a.entries);
     
     const highlights = new Set<string>();
     Object.entries(selectedCodes).forEach(([code, selected]) => {
@@ -269,10 +331,10 @@ function PatrolmansGuidePage() {
     });
 
     return list;
-  }, [selectedCodes]);
+  }, [selectedCodes, currentGuideData]);
 
   const filteredData = useMemo(() => {
-    const articles = PATROLMAN_GUIDE_DATA.filter((a) =>
+    const articles = currentGuideData.filter((a) =>
       activeTab === "penal"
         ? a.type === "penal" || a.type === "misdemeanor"
         : a.type === "traffic" || a.type === "parking"
@@ -288,11 +350,11 @@ function PatrolmansGuidePage() {
           (e) =>
             e.code.toLowerCase().includes(q) ||
             e.description.toLowerCase().includes(q) ||
-            (e.legalDescription || PENAL_CODE_LEGAL_DESCRIPTIONS[e.code] || "").toLowerCase().includes(q)
+            (e.legalDescription || currentLegalDescriptions[e.code] || "").toLowerCase().includes(q)
         ),
       }))
       .filter((a) => a.entries.length > 0);
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, currentGuideData, currentLegalDescriptions]);
 
   const totalEntries = filteredData.reduce(
     (sum, a) => sum + a.entries.length,
@@ -692,7 +754,7 @@ function PatrolmansGuidePage() {
                                       ? "border-l-[3px]"
                                       : borderAccent.className;
                                     const legalDescription =
-                                      entry.legalDescription || PENAL_CODE_LEGAL_DESCRIPTIONS[entry.code] || "—";
+                                      entry.legalDescription || currentLegalDescriptions[entry.code] || "—";
 
                                     return (
                                       <tr
@@ -939,7 +1001,7 @@ function PatrolmansGuidePage() {
             })()}
 
             {activeGuideSection === "illegal-items" && (() => {
-              const allGroups = [
+              const allGroupsEN2 = [
                 {
                   category: "Firearms and Related Items",
                   items: [
@@ -999,6 +1061,62 @@ function PatrolmansGuidePage() {
                 },
               ];
 
+              const allGroupsEN1 = [
+                {
+                  category: "AI.1 Weapons and Armors",
+                  items: [
+                    { item: "Firearm without Serial Number", note: "" },
+                    { item: "State issued Weapon or melee", note: "Exception: employees of state organization with authorization from leader of state organization" },
+                    { item: "Ballistic vest with state markings", note: "Exception: employees of state organization with authorization from leader of state organization" },
+                    { item: "Ballistic vest of any color except grey, hypo or \"skinned\" Grey vests", note: "" },
+                    { item: "Spare Weapon Parts", note: "" },
+                  ],
+                },
+                {
+                  category: "AI.2 State issued Equipment",
+                  items: [
+                    { item: "State issued facial coverings", note: "" },
+                    { item: "Balaclava or Medical masks", note: "" },
+                  ],
+                },
+                {
+                  category: "AI.3 Illicit Substances",
+                  items: [
+                    { item: "Cocaine", note: "" },
+                    { item: "Marijuana / Drugs", note: "" },
+                    { item: "Ingredients for Cocaine", note: "" },
+                  ],
+                },
+                {
+                  category: "AI.4 Items Prohibited Selling in Public Shops",
+                  items: [
+                    { item: "Any Kind of Alcohol", note: "" },
+                    { item: "Any Kind of Medical Products (Pills, Medkits, etc.)", note: "" },
+                    { item: "Any Type of License", note: "" },
+                  ],
+                },
+                {
+                  category: "AI.5 Illicit Technologies and Other Prohibited Items",
+                  items: [
+                    { item: "Vehicle Scanner", note: "" },
+                    { item: "USB drive with malicious software", note: "" },
+                    { item: "Engine blocker (for civilians)", note: "" },
+                    { item: "Search Base Hack", note: "" },
+                    { item: "Lockpicks", note: "" },
+                    { item: "Anti-Radar Equipment", note: "" },
+                    { item: "Counterfeit cash", note: "" },
+                    { item: "Stolen Goods (TV's, Furniture, Box of things)", note: "" },
+                    { item: "People Scanner", note: "Exception: Dept Collectors carrying out their work" },
+                    { item: "Fake documentation", note: "" },
+                    { item: "Ingredients for cocaine", note: "" },
+                    { item: "Spare weapons parts", note: "" },
+                    { item: "Production submodules for cocaine, marijuana and ammunition", note: "" },
+                  ],
+                },
+              ];
+
+              const allGroups = server === 'en1' ? allGroupsEN1 : allGroupsEN2;
+
               const filteredGroups = allGroups
                 .map((group) => {
                   const filteredItems = group.items.filter(
@@ -1027,6 +1145,11 @@ function PatrolmansGuidePage() {
                         <h3 className="text-[15px] font-bold text-[#111827] dark:text-white flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
                           {group.category}
+                          {group.category === "AI.4 Items Prohibited Selling in Public Shops" && (
+                            <span className="inline-block rounded-[4px] bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 text-[12px] text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40 font-medium ml-2">
+                              Note: Otherwise legal to possess
+                            </span>
+                          )}
                         </h3>
                         <div className="overflow-x-auto rounded-[8px] border border-[#e2e5ec] bg-white dark:border-[#222326] dark:bg-[#121213]">
                           <table className="w-full text-left table-fixed border-collapse">

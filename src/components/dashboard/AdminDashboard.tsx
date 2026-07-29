@@ -673,8 +673,8 @@ function NotificationsTab() {
                     return (
                       <div key={notification._id}>
                         <div className="flex items-start gap-3 py-2">
-                          <div className={`rounded-[8px] ${colorClass} p-2 shrink-0 flex items-center justify-center`}>
-                            {renderIcon(notification.icon, "h-4 w-4 text-white")}
+                          <div className={`rounded-[8px] ${colorClass} p-2.5 shrink-0 flex items-center justify-center w-10 h-10`}>
+                            {renderIcon(notification.icon, "h-5 w-5 text-white")}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-3">
