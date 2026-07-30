@@ -171,6 +171,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-H9S3L43WCX" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-H9S3L43WCX');
+`,
+          }}
+        />
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <style id="esportific-dark-theme-root">{darkThemeOverrideCss}</style>
