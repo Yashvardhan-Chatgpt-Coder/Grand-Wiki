@@ -32,6 +32,7 @@ import { Route as GuidesGuideIdRouteImport } from './routes/guides.$guideId'
 import { Route as GovernmentTemplatesRouteImport } from './routes/government/templates'
 import { Route as GovernmentLegislationRouteImport } from './routes/government/legislation'
 import { Route as GovernmentLawyerCodeRouteImport } from './routes/government/lawyer-code'
+import { Route as GovernmentCriminalCodeRouteImport } from './routes/government/criminal-code'
 
 const VehicleTicketingRoute = VehicleTicketingRouteImport.update({
   id: '/vehicle-ticketing',
@@ -148,6 +149,11 @@ const GovernmentLawyerCodeRoute = GovernmentLawyerCodeRouteImport.update({
   path: '/government/lawyer-code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovernmentCriminalCodeRoute = GovernmentCriminalCodeRouteImport.update({
+  id: '/government/criminal-code',
+  path: '/government/criminal-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRouteWithChildren
+  '/government/criminal-code': typeof GovernmentCriminalCodeRoute
   '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
   '/government/legislation': typeof GovernmentLegislationRoute
   '/government/templates': typeof GovernmentTemplatesRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/qna': typeof QnaRoute
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
+  '/government/criminal-code': typeof GovernmentCriminalCodeRoute
   '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
   '/government/legislation': typeof GovernmentLegislationRoute
   '/government/templates': typeof GovernmentTemplatesRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRouteWithChildren
+  '/government/criminal-code': typeof GovernmentCriminalCodeRoute
   '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
   '/government/legislation': typeof GovernmentLegislationRoute
   '/government/templates': typeof GovernmentTemplatesRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
+    | '/government/criminal-code'
     | '/government/lawyer-code'
     | '/government/legislation'
     | '/government/templates'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/qna'
     | '/server-rules'
     | '/signup'
+    | '/government/criminal-code'
     | '/government/lawyer-code'
     | '/government/legislation'
     | '/government/templates'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/server-rules'
     | '/signup'
     | '/vehicle-ticketing'
+    | '/government/criminal-code'
     | '/government/lawyer-code'
     | '/government/legislation'
     | '/government/templates'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   ServerRulesRoute: typeof ServerRulesRoute
   SignupRoute: typeof SignupRoute
   VehicleTicketingRoute: typeof VehicleTicketingRouteWithChildren
+  GovernmentCriminalCodeRoute: typeof GovernmentCriminalCodeRoute
   GovernmentLawyerCodeRoute: typeof GovernmentLawyerCodeRoute
   GovernmentLegislationRoute: typeof GovernmentLegislationRoute
   GovernmentTemplatesRoute: typeof GovernmentTemplatesRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovernmentLawyerCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/government/criminal-code': {
+      id: '/government/criminal-code'
+      path: '/government/criminal-code'
+      fullPath: '/government/criminal-code'
+      preLoaderRoute: typeof GovernmentCriminalCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServerRulesRoute: ServerRulesRoute,
   SignupRoute: SignupRoute,
   VehicleTicketingRoute: VehicleTicketingRouteWithChildren,
+  GovernmentCriminalCodeRoute: GovernmentCriminalCodeRoute,
   GovernmentLawyerCodeRoute: GovernmentLawyerCodeRoute,
   GovernmentLegislationRoute: GovernmentLegislationRoute,
   GovernmentTemplatesRoute: GovernmentTemplatesRoute,

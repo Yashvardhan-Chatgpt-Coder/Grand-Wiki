@@ -1113,3 +1113,74 @@ html.dark .rg-dropdown-item[data-selected] {
   66%  { transform: translate(-20%, -15%) scale(1.2); }
   100% { transform: translate(0%, 0%) scale(1.1); }
 }
+
+/* Responsive dark and light theme styles for the Lawyer Code legislation content */
+.lawyer-code-content {
+  color: #4d5568;
+}
+
+.lawyer-code-content h1,
+.lawyer-code-content h2,
+.lawyer-code-content h3 {
+  color: #000000 !important;
+}
+
+.lawyer-code-content h2 {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.lawyer-code-content p {
+  color: #4d5568 !important;
+}
+
+.lawyer-code-content span {
+  color: #000000 !important;
+}
+
+.lawyer-code-content p span.text-\[\#9aa1b0\] {
+  color: #4d5568 !important;
+}
+
+.lawyer-code-content p.border-l-2 {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.lawyer-code-content .font-dancing {
+  color: #000000 !important;
+}
+
+/* Dark theme overrides */
+.dark .lawyer-code-content {
+  color: #9aa1b0;
+}
+
+.dark .lawyer-code-content h1,
+.dark .lawyer-code-content h2,
+.dark .lawyer-code-content h3 {
+  color: #ffffff !important;
+}
+
+.dark .lawyer-code-content h2 {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .lawyer-code-content p {
+  color: #9aa1b0 !important;
+}
+
+.dark .lawyer-code-content span {
+  color: #ffffff !important;
+}
+
+.dark .lawyer-code-content p span.text-\[\#9aa1b0\] {
+  color: #9aa1b0 !important;
+}
+
+.dark .lawyer-code-content p.border-l-2 {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.dark .lawyer-code-content .font-dancing {
+  color: #ffffff !important;
+}
+

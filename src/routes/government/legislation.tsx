@@ -13,7 +13,7 @@ function GovernmentLegislationPage() {
   const legislationDocs = [
     { title: "Lawyer Code", image: "/Legislation/Lawyer Code.png", link: "/government/lawyer-code" },
     { title: "Criminal Procedure Code", image: "/Legislation/Criminal Procedure Code.png" },
-    { title: "Criminal Code", image: "/Legislation/Criminal Code.png" },
+    { title: "Criminal Code", image: "/Legislation/Criminal Code.png", link: "/government/criminal-code" },
     { title: "Firearms Code", image: "/Legislation/Firearms Code.png" },
     { title: "Immunity Code", image: "/Legislation/Immunity Code.png" },
     { title: "Evidence Code", image: "/Legislation/Evidence Code.png" },

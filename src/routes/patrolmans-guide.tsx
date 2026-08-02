@@ -204,14 +204,14 @@ function PatrolmansGuidePage() {
   const toggleCollapse = (title: string) =>
     setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }));
 
-  const handleCopyCode = useCallback(async (code: string) => {
+  const handleCopyCode = useCallback(async (textToCopy: string, code: string) => {
     try {
-      await navigator.clipboard.writeText(code);
+      await navigator.clipboard.writeText(textToCopy);
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 1200);
     } catch {
       const ta = document.createElement("textarea");
-      ta.value = code;
+      ta.value = textToCopy;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
@@ -257,9 +257,23 @@ function PatrolmansGuidePage() {
       .map(([code]) => code);
   }, [selectedCodes]);
 
+  const selectedEntries = useMemo(() => {
+    const allEntries = currentGuideData.flatMap((a) => a.entries);
+    return Object.entries(selectedCodes)
+      .filter(([_, selected]) => selected)
+      .map(([code]) => allEntries.find((e) => e.code === code))
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== undefined);
+  }, [selectedCodes, currentGuideData]);
+
   const selectedChargesStr = useMemo(() => {
-    return selectedCodesList.join(" + ");
-  }, [selectedCodesList]);
+    if (server === 'en1') {
+      return selectedEntries
+        .map((entry) => `${entry.code} ${entry.description}`)
+        .join(" + ");
+    } else {
+      return selectedCodesList.join(" + ");
+    }
+  }, [server, selectedEntries, selectedCodesList]);
 
   const hasIsolationSelected = useMemo(() => {
     return selectedCodesList.some((code) => code.startsWith("P.C. 9.1."));
@@ -388,7 +402,7 @@ function PatrolmansGuidePage() {
                   </span>
                   <ul className="space-y-1.5 text-slate-300 font-normal text-[11px] list-disc pl-3.5">
                     <li><strong>Checkboxes:</strong> Select charges to populate the summary card.</li>
-                    <li><strong>Row Clicks:</strong> Click anywhere on a row to instantly copy the code.</li>
+                    <li><strong>Row Clicks:</strong> Click anywhere on a row to instantly copy the code{server === 'en1' && " and charges"}.</li>
                     <li><strong>Summary Card:</strong> View and copy total selected charges, combined fines (capped at 50k), and stars (capped at 5).</li>
                     <li><strong>Highlight rules:</strong> Hover on the legends to check penalty variations.</li>
                   </ul>
@@ -763,7 +777,8 @@ function PatrolmansGuidePage() {
                                           if ((e.target as HTMLElement).closest(".checkbox-cell")) {
                                             return;
                                           }
-                                          handleCopyCode(entry.code);
+                                          const textToCopy = server === 'en1' ? `${entry.code} ${entry.description}` : entry.code;
+                                          handleCopyCode(textToCopy, entry.code);
                                         }}
                                         style={rowBorderStyle}
                                         className={cn(

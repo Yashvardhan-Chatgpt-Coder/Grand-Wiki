@@ -19,6 +19,7 @@ import {
   Bell,
   FileText,
   Building,
+  Calendar,
   type LucideIcon
 } from "lucide-react";
 import { SidebarCollapseButton } from "@/components/dashboard/SidebarCollapseButton";
@@ -41,6 +42,7 @@ interface NavItemConfig {
   icon: LucideIcon;
   search?: Record<string, string>;
   subItems?: SubItemConfig[];
+  comingSoon?: boolean;
 }
 
 const mainNavConfig: NavItemConfig[] = [
@@ -91,6 +93,7 @@ const mainNavConfig: NavItemConfig[] = [
     ]
   },
   { title: "Guides", url: "/guides", icon: BookOpen },
+  { title: "Events", url: "#", icon: Calendar, comingSoon: true },
   {
     title: "Questions & Answers",
     url: "/qna",
@@ -107,8 +110,8 @@ const mainNavConfig: NavItemConfig[] = [
       { title: "Gangs", search: { cat: "gangs" } }
     ]
   },
-  { title: "Pinned Commands", url: "/pinned-commands", icon: Pin },
-  { title: "Server Rules", url: "/server-rules", icon: FileText }
+  { title: "Server Rules", url: "/server-rules", icon: FileText },
+  { title: "Pinned Commands", url: "/pinned-commands", icon: Pin }
 ];
 
 const adminNavConfig: NavItemConfig[] = [
@@ -230,15 +233,19 @@ export function AppSidebar() {
             const isExpanded = expandedItems[item.title];
 
             const sharedClasses = cn(
-              "flex h-9 w-full cursor-pointer items-center rounded-[6px] text-[14px] transition-all duration-300 ease-in-out justify-start",
+              "flex h-9 w-full items-center rounded-[6px] text-[14px] transition-all duration-300 ease-in-out justify-start",
+              item.comingSoon ? "opacity-60 cursor-not-allowed select-none" : "cursor-pointer",
               collapsed ? "pl-[18px] pr-0" : "pl-3 pr-3",
               active
                 ? "bg-[#f0f1f3] font-medium text-[#000000]"
+                : item.comingSoon
+                ? "text-[#8a90a0]"
                 : "text-[#666666] hover:bg-[#f7f6fb] hover:text-[#000000]",
             );
 
             // Parent items with submenus: plain button, only toggles expand/collapse
-            // Items without submenus: Link, navigates
+            // Coming soon items: plain div with badge
+            // Standard items without submenus: Link, navigates
             const mainElement = hasSubItems ? (
               <button
                 type="button"
@@ -266,6 +273,23 @@ export function AppSidebar() {
                   </div>
                 )}
               </button>
+            ) : item.comingSoon ? (
+              <div className={sharedClasses}>
+                <Icon className="h-5 w-5 shrink-0" />
+                <span
+                  className={cn(
+                    "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
+                    collapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[170px] opacity-100 ml-3",
+                  )}
+                >
+                  {item.title}
+                </span>
+                {!collapsed && (
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-wider bg-[#f0f1f3] text-[#8a90a0] px-1.5 py-0.5 rounded-[4px] border border-[#e5e7ef] scale-90 select-none">
+                    Soon
+                  </span>
+                )}
+              </div>
             ) : (
               <Link
                 to={item.url}
