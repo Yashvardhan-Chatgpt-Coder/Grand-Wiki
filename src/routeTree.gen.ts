@@ -20,6 +20,7 @@ import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroductionRouteImport } from './routes/introduction'
 import { Route as GuidesRouteImport } from './routes/guides'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as DepartmentRadioRouteImport } from './routes/department-radio'
 import { Route as ArrestProcedureRouteImport } from './routes/arrest-procedure'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -30,9 +31,27 @@ import { Route as VehicleTicketingEn2RouteImport } from './routes/vehicle-ticket
 import { Route as VehicleTicketingEn1RouteImport } from './routes/vehicle-ticketing/en1'
 import { Route as GuidesGuideIdRouteImport } from './routes/guides.$guideId'
 import { Route as GovernmentTemplatesRouteImport } from './routes/government/templates'
+import { Route as GovernmentTaxCodeRouteImport } from './routes/government/tax-code'
 import { Route as GovernmentLegislationRouteImport } from './routes/government/legislation'
 import { Route as GovernmentLawyerCodeRouteImport } from './routes/government/lawyer-code'
+import { Route as GovernmentImmunityCodeRouteImport } from './routes/government/immunity-code'
+import { Route as GovernmentFirearmsCodeRouteImport } from './routes/government/firearms-code'
+import { Route as GovernmentFinanceCodeRouteImport } from './routes/government/finance-code'
+import { Route as GovernmentEvidenceCodeRouteImport } from './routes/government/evidence-code'
 import { Route as GovernmentCriminalCodeRouteImport } from './routes/government/criminal-code'
+import { Route as GovernmentEn3TemplatesRouteImport } from './routes/government/en3/templates'
+import { Route as GovernmentEn3LegislationRouteImport } from './routes/government/en3/legislation'
+import { Route as GovernmentEn2TemplatesRouteImport } from './routes/government/en2/templates'
+import { Route as GovernmentEn2TaxCodeRouteImport } from './routes/government/en2/tax-code'
+import { Route as GovernmentEn2LegislationRouteImport } from './routes/government/en2/legislation'
+import { Route as GovernmentEn2LawyerCodeRouteImport } from './routes/government/en2/lawyer-code'
+import { Route as GovernmentEn2ImmunityCodeRouteImport } from './routes/government/en2/immunity-code'
+import { Route as GovernmentEn2FirearmsCodeRouteImport } from './routes/government/en2/firearms-code'
+import { Route as GovernmentEn2FinanceCodeRouteImport } from './routes/government/en2/finance-code'
+import { Route as GovernmentEn2EvidenceCodeRouteImport } from './routes/government/en2/evidence-code'
+import { Route as GovernmentEn2CriminalCodeRouteImport } from './routes/government/en2/criminal-code'
+import { Route as GovernmentEn1TemplatesRouteImport } from './routes/government/en1/templates'
+import { Route as GovernmentEn1LegislationRouteImport } from './routes/government/en1/legislation'
 
 const VehicleTicketingRoute = VehicleTicketingRouteImport.update({
   id: '/vehicle-ticketing',
@@ -89,6 +108,11 @@ const GuidesRoute = GuidesRouteImport.update({
   path: '/guides',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DepartmentRadioRoute = DepartmentRadioRouteImport.update({
   id: '/department-radio',
   path: '/department-radio',
@@ -139,6 +163,11 @@ const GovernmentTemplatesRoute = GovernmentTemplatesRouteImport.update({
   path: '/government/templates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovernmentTaxCodeRoute = GovernmentTaxCodeRouteImport.update({
+  id: '/government/tax-code',
+  path: '/government/tax-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovernmentLegislationRoute = GovernmentLegislationRouteImport.update({
   id: '/government/legislation',
   path: '/government/legislation',
@@ -149,17 +178,111 @@ const GovernmentLawyerCodeRoute = GovernmentLawyerCodeRouteImport.update({
   path: '/government/lawyer-code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovernmentImmunityCodeRoute = GovernmentImmunityCodeRouteImport.update({
+  id: '/government/immunity-code',
+  path: '/government/immunity-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentFirearmsCodeRoute = GovernmentFirearmsCodeRouteImport.update({
+  id: '/government/firearms-code',
+  path: '/government/firearms-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentFinanceCodeRoute = GovernmentFinanceCodeRouteImport.update({
+  id: '/government/finance-code',
+  path: '/government/finance-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentEvidenceCodeRoute = GovernmentEvidenceCodeRouteImport.update({
+  id: '/government/evidence-code',
+  path: '/government/evidence-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovernmentCriminalCodeRoute = GovernmentCriminalCodeRouteImport.update({
   id: '/government/criminal-code',
   path: '/government/criminal-code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovernmentEn3TemplatesRoute = GovernmentEn3TemplatesRouteImport.update({
+  id: '/government/en3/templates',
+  path: '/government/en3/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentEn3LegislationRoute =
+  GovernmentEn3LegislationRouteImport.update({
+    id: '/government/en3/legislation',
+    path: '/government/en3/legislation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn2TemplatesRoute = GovernmentEn2TemplatesRouteImport.update({
+  id: '/government/en2/templates',
+  path: '/government/en2/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentEn2TaxCodeRoute = GovernmentEn2TaxCodeRouteImport.update({
+  id: '/government/en2/tax-code',
+  path: '/government/en2/tax-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentEn2LegislationRoute =
+  GovernmentEn2LegislationRouteImport.update({
+    id: '/government/en2/legislation',
+    path: '/government/en2/legislation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn2LawyerCodeRoute = GovernmentEn2LawyerCodeRouteImport.update({
+  id: '/government/en2/lawyer-code',
+  path: '/government/en2/lawyer-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentEn2ImmunityCodeRoute =
+  GovernmentEn2ImmunityCodeRouteImport.update({
+    id: '/government/en2/immunity-code',
+    path: '/government/en2/immunity-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn2FirearmsCodeRoute =
+  GovernmentEn2FirearmsCodeRouteImport.update({
+    id: '/government/en2/firearms-code',
+    path: '/government/en2/firearms-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn2FinanceCodeRoute =
+  GovernmentEn2FinanceCodeRouteImport.update({
+    id: '/government/en2/finance-code',
+    path: '/government/en2/finance-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn2EvidenceCodeRoute =
+  GovernmentEn2EvidenceCodeRouteImport.update({
+    id: '/government/en2/evidence-code',
+    path: '/government/en2/evidence-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn2CriminalCodeRoute =
+  GovernmentEn2CriminalCodeRouteImport.update({
+    id: '/government/en2/criminal-code',
+    path: '/government/en2/criminal-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const GovernmentEn1TemplatesRoute = GovernmentEn1TemplatesRouteImport.update({
+  id: '/government/en1/templates',
+  path: '/government/en1/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernmentEn1LegislationRoute =
+  GovernmentEn1LegislationRouteImport.update({
+    id: '/government/en1/legislation',
+    path: '/government/en1/legislation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/arrest-procedure': typeof ArrestProcedureRoute
   '/department-radio': typeof DepartmentRadioRoute
+  '/events': typeof EventsRoute
   '/guides': typeof GuidesRouteWithChildren
   '/introduction': typeof IntroductionRoute
   '/login': typeof LoginRoute
@@ -172,20 +295,39 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRouteWithChildren
   '/government/criminal-code': typeof GovernmentCriminalCodeRoute
+  '/government/evidence-code': typeof GovernmentEvidenceCodeRoute
+  '/government/finance-code': typeof GovernmentFinanceCodeRoute
+  '/government/firearms-code': typeof GovernmentFirearmsCodeRoute
+  '/government/immunity-code': typeof GovernmentImmunityCodeRoute
   '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
   '/government/legislation': typeof GovernmentLegislationRoute
+  '/government/tax-code': typeof GovernmentTaxCodeRoute
   '/government/templates': typeof GovernmentTemplatesRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
   '/vehicle-ticketing/en1': typeof VehicleTicketingEn1Route
   '/vehicle-ticketing/en2': typeof VehicleTicketingEn2Route
   '/vehicle-ticketing/en3': typeof VehicleTicketingEn3Route
   '/vehicle-ticketing/': typeof VehicleTicketingIndexRoute
+  '/government/en1/legislation': typeof GovernmentEn1LegislationRoute
+  '/government/en1/templates': typeof GovernmentEn1TemplatesRoute
+  '/government/en2/criminal-code': typeof GovernmentEn2CriminalCodeRoute
+  '/government/en2/evidence-code': typeof GovernmentEn2EvidenceCodeRoute
+  '/government/en2/finance-code': typeof GovernmentEn2FinanceCodeRoute
+  '/government/en2/firearms-code': typeof GovernmentEn2FirearmsCodeRoute
+  '/government/en2/immunity-code': typeof GovernmentEn2ImmunityCodeRoute
+  '/government/en2/lawyer-code': typeof GovernmentEn2LawyerCodeRoute
+  '/government/en2/legislation': typeof GovernmentEn2LegislationRoute
+  '/government/en2/tax-code': typeof GovernmentEn2TaxCodeRoute
+  '/government/en2/templates': typeof GovernmentEn2TemplatesRoute
+  '/government/en3/legislation': typeof GovernmentEn3LegislationRoute
+  '/government/en3/templates': typeof GovernmentEn3TemplatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/arrest-procedure': typeof ArrestProcedureRoute
   '/department-radio': typeof DepartmentRadioRoute
+  '/events': typeof EventsRoute
   '/guides': typeof GuidesRouteWithChildren
   '/introduction': typeof IntroductionRoute
   '/login': typeof LoginRoute
@@ -197,14 +339,32 @@ export interface FileRoutesByTo {
   '/server-rules': typeof ServerRulesRoute
   '/signup': typeof SignupRoute
   '/government/criminal-code': typeof GovernmentCriminalCodeRoute
+  '/government/evidence-code': typeof GovernmentEvidenceCodeRoute
+  '/government/finance-code': typeof GovernmentFinanceCodeRoute
+  '/government/firearms-code': typeof GovernmentFirearmsCodeRoute
+  '/government/immunity-code': typeof GovernmentImmunityCodeRoute
   '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
   '/government/legislation': typeof GovernmentLegislationRoute
+  '/government/tax-code': typeof GovernmentTaxCodeRoute
   '/government/templates': typeof GovernmentTemplatesRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
   '/vehicle-ticketing/en1': typeof VehicleTicketingEn1Route
   '/vehicle-ticketing/en2': typeof VehicleTicketingEn2Route
   '/vehicle-ticketing/en3': typeof VehicleTicketingEn3Route
   '/vehicle-ticketing': typeof VehicleTicketingIndexRoute
+  '/government/en1/legislation': typeof GovernmentEn1LegislationRoute
+  '/government/en1/templates': typeof GovernmentEn1TemplatesRoute
+  '/government/en2/criminal-code': typeof GovernmentEn2CriminalCodeRoute
+  '/government/en2/evidence-code': typeof GovernmentEn2EvidenceCodeRoute
+  '/government/en2/finance-code': typeof GovernmentEn2FinanceCodeRoute
+  '/government/en2/firearms-code': typeof GovernmentEn2FirearmsCodeRoute
+  '/government/en2/immunity-code': typeof GovernmentEn2ImmunityCodeRoute
+  '/government/en2/lawyer-code': typeof GovernmentEn2LawyerCodeRoute
+  '/government/en2/legislation': typeof GovernmentEn2LegislationRoute
+  '/government/en2/tax-code': typeof GovernmentEn2TaxCodeRoute
+  '/government/en2/templates': typeof GovernmentEn2TemplatesRoute
+  '/government/en3/legislation': typeof GovernmentEn3LegislationRoute
+  '/government/en3/templates': typeof GovernmentEn3TemplatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -212,6 +372,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/arrest-procedure': typeof ArrestProcedureRoute
   '/department-radio': typeof DepartmentRadioRoute
+  '/events': typeof EventsRoute
   '/guides': typeof GuidesRouteWithChildren
   '/introduction': typeof IntroductionRoute
   '/login': typeof LoginRoute
@@ -224,14 +385,32 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/vehicle-ticketing': typeof VehicleTicketingRouteWithChildren
   '/government/criminal-code': typeof GovernmentCriminalCodeRoute
+  '/government/evidence-code': typeof GovernmentEvidenceCodeRoute
+  '/government/finance-code': typeof GovernmentFinanceCodeRoute
+  '/government/firearms-code': typeof GovernmentFirearmsCodeRoute
+  '/government/immunity-code': typeof GovernmentImmunityCodeRoute
   '/government/lawyer-code': typeof GovernmentLawyerCodeRoute
   '/government/legislation': typeof GovernmentLegislationRoute
+  '/government/tax-code': typeof GovernmentTaxCodeRoute
   '/government/templates': typeof GovernmentTemplatesRoute
   '/guides/$guideId': typeof GuidesGuideIdRoute
   '/vehicle-ticketing/en1': typeof VehicleTicketingEn1Route
   '/vehicle-ticketing/en2': typeof VehicleTicketingEn2Route
   '/vehicle-ticketing/en3': typeof VehicleTicketingEn3Route
   '/vehicle-ticketing/': typeof VehicleTicketingIndexRoute
+  '/government/en1/legislation': typeof GovernmentEn1LegislationRoute
+  '/government/en1/templates': typeof GovernmentEn1TemplatesRoute
+  '/government/en2/criminal-code': typeof GovernmentEn2CriminalCodeRoute
+  '/government/en2/evidence-code': typeof GovernmentEn2EvidenceCodeRoute
+  '/government/en2/finance-code': typeof GovernmentEn2FinanceCodeRoute
+  '/government/en2/firearms-code': typeof GovernmentEn2FirearmsCodeRoute
+  '/government/en2/immunity-code': typeof GovernmentEn2ImmunityCodeRoute
+  '/government/en2/lawyer-code': typeof GovernmentEn2LawyerCodeRoute
+  '/government/en2/legislation': typeof GovernmentEn2LegislationRoute
+  '/government/en2/tax-code': typeof GovernmentEn2TaxCodeRoute
+  '/government/en2/templates': typeof GovernmentEn2TemplatesRoute
+  '/government/en3/legislation': typeof GovernmentEn3LegislationRoute
+  '/government/en3/templates': typeof GovernmentEn3TemplatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -240,6 +419,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/arrest-procedure'
     | '/department-radio'
+    | '/events'
     | '/guides'
     | '/introduction'
     | '/login'
@@ -252,20 +432,39 @@ export interface FileRouteTypes {
     | '/signup'
     | '/vehicle-ticketing'
     | '/government/criminal-code'
+    | '/government/evidence-code'
+    | '/government/finance-code'
+    | '/government/firearms-code'
+    | '/government/immunity-code'
     | '/government/lawyer-code'
     | '/government/legislation'
+    | '/government/tax-code'
     | '/government/templates'
     | '/guides/$guideId'
     | '/vehicle-ticketing/en1'
     | '/vehicle-ticketing/en2'
     | '/vehicle-ticketing/en3'
     | '/vehicle-ticketing/'
+    | '/government/en1/legislation'
+    | '/government/en1/templates'
+    | '/government/en2/criminal-code'
+    | '/government/en2/evidence-code'
+    | '/government/en2/finance-code'
+    | '/government/en2/firearms-code'
+    | '/government/en2/immunity-code'
+    | '/government/en2/lawyer-code'
+    | '/government/en2/legislation'
+    | '/government/en2/tax-code'
+    | '/government/en2/templates'
+    | '/government/en3/legislation'
+    | '/government/en3/templates'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/arrest-procedure'
     | '/department-radio'
+    | '/events'
     | '/guides'
     | '/introduction'
     | '/login'
@@ -277,20 +476,39 @@ export interface FileRouteTypes {
     | '/server-rules'
     | '/signup'
     | '/government/criminal-code'
+    | '/government/evidence-code'
+    | '/government/finance-code'
+    | '/government/firearms-code'
+    | '/government/immunity-code'
     | '/government/lawyer-code'
     | '/government/legislation'
+    | '/government/tax-code'
     | '/government/templates'
     | '/guides/$guideId'
     | '/vehicle-ticketing/en1'
     | '/vehicle-ticketing/en2'
     | '/vehicle-ticketing/en3'
     | '/vehicle-ticketing'
+    | '/government/en1/legislation'
+    | '/government/en1/templates'
+    | '/government/en2/criminal-code'
+    | '/government/en2/evidence-code'
+    | '/government/en2/finance-code'
+    | '/government/en2/firearms-code'
+    | '/government/en2/immunity-code'
+    | '/government/en2/lawyer-code'
+    | '/government/en2/legislation'
+    | '/government/en2/tax-code'
+    | '/government/en2/templates'
+    | '/government/en3/legislation'
+    | '/government/en3/templates'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/arrest-procedure'
     | '/department-radio'
+    | '/events'
     | '/guides'
     | '/introduction'
     | '/login'
@@ -303,14 +521,32 @@ export interface FileRouteTypes {
     | '/signup'
     | '/vehicle-ticketing'
     | '/government/criminal-code'
+    | '/government/evidence-code'
+    | '/government/finance-code'
+    | '/government/firearms-code'
+    | '/government/immunity-code'
     | '/government/lawyer-code'
     | '/government/legislation'
+    | '/government/tax-code'
     | '/government/templates'
     | '/guides/$guideId'
     | '/vehicle-ticketing/en1'
     | '/vehicle-ticketing/en2'
     | '/vehicle-ticketing/en3'
     | '/vehicle-ticketing/'
+    | '/government/en1/legislation'
+    | '/government/en1/templates'
+    | '/government/en2/criminal-code'
+    | '/government/en2/evidence-code'
+    | '/government/en2/finance-code'
+    | '/government/en2/firearms-code'
+    | '/government/en2/immunity-code'
+    | '/government/en2/lawyer-code'
+    | '/government/en2/legislation'
+    | '/government/en2/tax-code'
+    | '/government/en2/templates'
+    | '/government/en3/legislation'
+    | '/government/en3/templates'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -318,6 +554,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ArrestProcedureRoute: typeof ArrestProcedureRoute
   DepartmentRadioRoute: typeof DepartmentRadioRoute
+  EventsRoute: typeof EventsRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   IntroductionRoute: typeof IntroductionRoute
   LoginRoute: typeof LoginRoute
@@ -330,9 +567,27 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   VehicleTicketingRoute: typeof VehicleTicketingRouteWithChildren
   GovernmentCriminalCodeRoute: typeof GovernmentCriminalCodeRoute
+  GovernmentEvidenceCodeRoute: typeof GovernmentEvidenceCodeRoute
+  GovernmentFinanceCodeRoute: typeof GovernmentFinanceCodeRoute
+  GovernmentFirearmsCodeRoute: typeof GovernmentFirearmsCodeRoute
+  GovernmentImmunityCodeRoute: typeof GovernmentImmunityCodeRoute
   GovernmentLawyerCodeRoute: typeof GovernmentLawyerCodeRoute
   GovernmentLegislationRoute: typeof GovernmentLegislationRoute
+  GovernmentTaxCodeRoute: typeof GovernmentTaxCodeRoute
   GovernmentTemplatesRoute: typeof GovernmentTemplatesRoute
+  GovernmentEn1LegislationRoute: typeof GovernmentEn1LegislationRoute
+  GovernmentEn1TemplatesRoute: typeof GovernmentEn1TemplatesRoute
+  GovernmentEn2CriminalCodeRoute: typeof GovernmentEn2CriminalCodeRoute
+  GovernmentEn2EvidenceCodeRoute: typeof GovernmentEn2EvidenceCodeRoute
+  GovernmentEn2FinanceCodeRoute: typeof GovernmentEn2FinanceCodeRoute
+  GovernmentEn2FirearmsCodeRoute: typeof GovernmentEn2FirearmsCodeRoute
+  GovernmentEn2ImmunityCodeRoute: typeof GovernmentEn2ImmunityCodeRoute
+  GovernmentEn2LawyerCodeRoute: typeof GovernmentEn2LawyerCodeRoute
+  GovernmentEn2LegislationRoute: typeof GovernmentEn2LegislationRoute
+  GovernmentEn2TaxCodeRoute: typeof GovernmentEn2TaxCodeRoute
+  GovernmentEn2TemplatesRoute: typeof GovernmentEn2TemplatesRoute
+  GovernmentEn3LegislationRoute: typeof GovernmentEn3LegislationRoute
+  GovernmentEn3TemplatesRoute: typeof GovernmentEn3TemplatesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -414,6 +669,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/department-radio': {
       id: '/department-radio'
       path: '/department-radio'
@@ -484,6 +746,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovernmentTemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/government/tax-code': {
+      id: '/government/tax-code'
+      path: '/government/tax-code'
+      fullPath: '/government/tax-code'
+      preLoaderRoute: typeof GovernmentTaxCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/government/legislation': {
       id: '/government/legislation'
       path: '/government/legislation'
@@ -498,11 +767,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovernmentLawyerCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/government/immunity-code': {
+      id: '/government/immunity-code'
+      path: '/government/immunity-code'
+      fullPath: '/government/immunity-code'
+      preLoaderRoute: typeof GovernmentImmunityCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/firearms-code': {
+      id: '/government/firearms-code'
+      path: '/government/firearms-code'
+      fullPath: '/government/firearms-code'
+      preLoaderRoute: typeof GovernmentFirearmsCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/finance-code': {
+      id: '/government/finance-code'
+      path: '/government/finance-code'
+      fullPath: '/government/finance-code'
+      preLoaderRoute: typeof GovernmentFinanceCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/evidence-code': {
+      id: '/government/evidence-code'
+      path: '/government/evidence-code'
+      fullPath: '/government/evidence-code'
+      preLoaderRoute: typeof GovernmentEvidenceCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/government/criminal-code': {
       id: '/government/criminal-code'
       path: '/government/criminal-code'
       fullPath: '/government/criminal-code'
       preLoaderRoute: typeof GovernmentCriminalCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en3/templates': {
+      id: '/government/en3/templates'
+      path: '/government/en3/templates'
+      fullPath: '/government/en3/templates'
+      preLoaderRoute: typeof GovernmentEn3TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en3/legislation': {
+      id: '/government/en3/legislation'
+      path: '/government/en3/legislation'
+      fullPath: '/government/en3/legislation'
+      preLoaderRoute: typeof GovernmentEn3LegislationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/templates': {
+      id: '/government/en2/templates'
+      path: '/government/en2/templates'
+      fullPath: '/government/en2/templates'
+      preLoaderRoute: typeof GovernmentEn2TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/tax-code': {
+      id: '/government/en2/tax-code'
+      path: '/government/en2/tax-code'
+      fullPath: '/government/en2/tax-code'
+      preLoaderRoute: typeof GovernmentEn2TaxCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/legislation': {
+      id: '/government/en2/legislation'
+      path: '/government/en2/legislation'
+      fullPath: '/government/en2/legislation'
+      preLoaderRoute: typeof GovernmentEn2LegislationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/lawyer-code': {
+      id: '/government/en2/lawyer-code'
+      path: '/government/en2/lawyer-code'
+      fullPath: '/government/en2/lawyer-code'
+      preLoaderRoute: typeof GovernmentEn2LawyerCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/immunity-code': {
+      id: '/government/en2/immunity-code'
+      path: '/government/en2/immunity-code'
+      fullPath: '/government/en2/immunity-code'
+      preLoaderRoute: typeof GovernmentEn2ImmunityCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/firearms-code': {
+      id: '/government/en2/firearms-code'
+      path: '/government/en2/firearms-code'
+      fullPath: '/government/en2/firearms-code'
+      preLoaderRoute: typeof GovernmentEn2FirearmsCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/finance-code': {
+      id: '/government/en2/finance-code'
+      path: '/government/en2/finance-code'
+      fullPath: '/government/en2/finance-code'
+      preLoaderRoute: typeof GovernmentEn2FinanceCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/evidence-code': {
+      id: '/government/en2/evidence-code'
+      path: '/government/en2/evidence-code'
+      fullPath: '/government/en2/evidence-code'
+      preLoaderRoute: typeof GovernmentEn2EvidenceCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en2/criminal-code': {
+      id: '/government/en2/criminal-code'
+      path: '/government/en2/criminal-code'
+      fullPath: '/government/en2/criminal-code'
+      preLoaderRoute: typeof GovernmentEn2CriminalCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en1/templates': {
+      id: '/government/en1/templates'
+      path: '/government/en1/templates'
+      fullPath: '/government/en1/templates'
+      preLoaderRoute: typeof GovernmentEn1TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/government/en1/legislation': {
+      id: '/government/en1/legislation'
+      path: '/government/en1/legislation'
+      fullPath: '/government/en1/legislation'
+      preLoaderRoute: typeof GovernmentEn1LegislationRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -541,6 +929,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ArrestProcedureRoute: ArrestProcedureRoute,
   DepartmentRadioRoute: DepartmentRadioRoute,
+  EventsRoute: EventsRoute,
   GuidesRoute: GuidesRouteWithChildren,
   IntroductionRoute: IntroductionRoute,
   LoginRoute: LoginRoute,
@@ -553,9 +942,27 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   VehicleTicketingRoute: VehicleTicketingRouteWithChildren,
   GovernmentCriminalCodeRoute: GovernmentCriminalCodeRoute,
+  GovernmentEvidenceCodeRoute: GovernmentEvidenceCodeRoute,
+  GovernmentFinanceCodeRoute: GovernmentFinanceCodeRoute,
+  GovernmentFirearmsCodeRoute: GovernmentFirearmsCodeRoute,
+  GovernmentImmunityCodeRoute: GovernmentImmunityCodeRoute,
   GovernmentLawyerCodeRoute: GovernmentLawyerCodeRoute,
   GovernmentLegislationRoute: GovernmentLegislationRoute,
+  GovernmentTaxCodeRoute: GovernmentTaxCodeRoute,
   GovernmentTemplatesRoute: GovernmentTemplatesRoute,
+  GovernmentEn1LegislationRoute: GovernmentEn1LegislationRoute,
+  GovernmentEn1TemplatesRoute: GovernmentEn1TemplatesRoute,
+  GovernmentEn2CriminalCodeRoute: GovernmentEn2CriminalCodeRoute,
+  GovernmentEn2EvidenceCodeRoute: GovernmentEn2EvidenceCodeRoute,
+  GovernmentEn2FinanceCodeRoute: GovernmentEn2FinanceCodeRoute,
+  GovernmentEn2FirearmsCodeRoute: GovernmentEn2FirearmsCodeRoute,
+  GovernmentEn2ImmunityCodeRoute: GovernmentEn2ImmunityCodeRoute,
+  GovernmentEn2LawyerCodeRoute: GovernmentEn2LawyerCodeRoute,
+  GovernmentEn2LegislationRoute: GovernmentEn2LegislationRoute,
+  GovernmentEn2TaxCodeRoute: GovernmentEn2TaxCodeRoute,
+  GovernmentEn2TemplatesRoute: GovernmentEn2TemplatesRoute,
+  GovernmentEn3LegislationRoute: GovernmentEn3LegislationRoute,
+  GovernmentEn3TemplatesRoute: GovernmentEn3TemplatesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

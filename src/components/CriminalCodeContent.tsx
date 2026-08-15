@@ -694,7 +694,7 @@ export function CriminalCodeContent() {
         <span className="font-bold text-black dark:text-white mr-2">A.6.7</span>Counterfeit Money
       </p>
 
-      <h2 className="text-[20px] font-bold mt-10 mb-4 text-black dark:text-white border-b border-black/20 dark:border-white/20 pb-2 font-merriweather">Credit and Copyright</h2>
+      <h2 className="text-[20px] font-bold mt-10 mb-4 text-black dark:text-white border-b border-black/20 dark:border-white/20 pb-2 font-merriweather text-center">Credit and Copyright</h2>
       <p className="mb-3 text-justify font-merriweather leading-relaxed text-[#5c6470] dark:text-[#9aa1b0]">
         This work, and the others in this series of legislative enhancement are produced and promulgated in the interests of justice and the promotion of the legal rights of all citizens of the State of San Andreas.
       </p>
@@ -717,7 +717,7 @@ export function CriminalCodeContent() {
       </div>
 
 
-      <h2 className="text-[20px] font-bold mt-10 mb-4 text-black dark:text-white border-b border-black/20 dark:border-white/20 pb-2 font-merriweather">Version History and Changes</h2>
+      <h2 className="text-[20px] font-bold mt-10 mb-4 text-black dark:text-white border-b border-black/20 dark:border-white/20 pb-2 font-merriweather text-center">Version History and Changes</h2>
       <p className="mb-4 text-justify font-merriweather font-bold text-black dark:text-white">
         First Edition. Published on the 12th of June 2022.
       </p>

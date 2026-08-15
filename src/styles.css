@@ -234,6 +234,15 @@
     background: transparent;
   }
 
+  /* Hide scrollbars utility */
+  .no-scrollbar {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;  /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;             /* Chrome, Safari and Opera */
+  }
+
   .es-global-loader {
     display: flex;
     width: 100%;

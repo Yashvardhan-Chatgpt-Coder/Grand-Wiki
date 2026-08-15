@@ -910,7 +910,7 @@ export function LawyerCodeContent() {
         </div>
       </div>
 
-      <h2 className="text-[20px] font-bold mt-12 mb-4 text-white border-b border-white/20 pb-2 font-merriweather">Credit and Copyright</h2>
+      <h2 className="text-[20px] font-bold mt-12 mb-4 text-white border-b border-white/20 pb-2 font-merriweather text-center">Credit and Copyright</h2>
       <p className="mb-4 text-justify font-merriweather leading-relaxed text-[#9aa1b0]">
         This work, and the others in this series of legislative enhancement are produced and promulgated in the interests of justice and the promotion of the legal rights of all citizens of the State of San Andreas.
       </p>
@@ -938,7 +938,7 @@ export function LawyerCodeContent() {
         Originally derived from work laid out by the Whitewind Law Office, Lane Stevens, and Ni Bjeebies from another city with a great history.
       </p>
 
-      <h2 className="text-[20px] font-bold mt-12 mb-4 text-white border-b border-white/20 pb-2 font-merriweather">Version History and Changes</h2>
+      <h2 className="text-[20px] font-bold mt-12 mb-4 text-white border-b border-white/20 pb-2 font-merriweather text-center">Version History and Changes</h2>
       
       <h3 className="text-[17px] font-bold mt-6 mb-2 text-white font-merriweather">First Edition</h3>
       <p className="mb-4 text-justify font-merriweather leading-relaxed text-white font-bold">

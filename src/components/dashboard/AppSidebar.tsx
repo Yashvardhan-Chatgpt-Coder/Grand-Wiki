@@ -34,6 +34,7 @@ interface SubItemConfig {
   title: string;
   search?: Record<string, string>;
   url?: string;
+  subItems?: SubItemConfig[];
 }
 
 interface NavItemConfig {
@@ -88,12 +89,31 @@ const mainNavConfig: NavItemConfig[] = [
     url: "/government/legislation",
     icon: Building,
     subItems: [
-      { title: "Legislation", url: "/government/legislation" },
-      { title: "Document Templates", url: "/government/templates" }
+      {
+        title: "EN #1",
+        subItems: [
+          { title: "Legislation", url: "/government/en1/legislation" },
+          { title: "Templates", url: "/government/en1/templates" }
+        ]
+      },
+      {
+        title: "EN #2",
+        subItems: [
+          { title: "Legislation", url: "/government/en2/legislation" },
+          { title: "Templates", url: "/government/en2/templates" }
+        ]
+      },
+      {
+        title: "EN #3",
+        subItems: [
+          { title: "Legislation", url: "/government/en3/legislation" },
+          { title: "Templates", url: "/government/en3/templates" }
+        ]
+      }
     ]
   },
   { title: "Guides", url: "/guides", icon: BookOpen },
-  { title: "Events", url: "#", icon: Calendar, comingSoon: true },
+  { title: "Events", url: "/events", icon: Calendar },
   {
     title: "Questions & Answers",
     url: "/qna",
@@ -120,27 +140,6 @@ const adminNavConfig: NavItemConfig[] = [
   { title: "Back to Dashboard", url: "/", icon: Home }
 ];
 
-const SUBMENU_STORAGE_KEY = "grandrp-sidebar-expanded-submenus";
-
-function readExpandedSubmenus(): Record<string, boolean> {
-  if (typeof window === "undefined") return { "Organizations": false, "Questions & Answers": false, "Patrolman's Guide": false, "Vehicle Ticketing Tool": false };
-  try {
-    const stored = window.localStorage.getItem(SUBMENU_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : { "Organizations": false, "Questions & Answers": false, "Patrolman's Guide": false, "Vehicle Ticketing Tool": false };
-  } catch {
-    return { "Organizations": false, "Questions & Answers": false, "Patrolman's Guide": false, "Vehicle Ticketing Tool": false };
-  }
-}
-
-function writeExpandedSubmenus(state: Record<string, boolean>) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(SUBMENU_STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore
-  }
-}
-
 export function AppSidebar() {
   const { user } = useCurrentUser();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -148,23 +147,27 @@ export function AppSidebar() {
   const { collapsed, toggle } = useSidebarCollapsed();
   const [supportOpen, setSupportOpen] = useState(false);
 
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    "Organizations": false,
-    "Questions & Answers": false,
-    "Patrolman's Guide": false,
-    "Vehicle Ticketing Tool": false,
-  });
+  const [userToggledExpanded, setUserToggledExpanded] = useState<Record<string, boolean>>({});
+  const [expandedSubmenus, setExpandedSubmenus] = useState<Record<string, boolean>>({});
+
+  const toggleSubmenuExpand = (subItemTitle: string) => {
+    setExpandedSubmenus((prev) => ({
+      ...prev,
+      [subItemTitle]: !prev[subItemTitle],
+    }));
+  };
 
   useEffect(() => {
-    setExpandedItems(readExpandedSubmenus());
-  }, []);
+    // Automatically collapse other menus and reset when user moves between root path structures
+    setUserToggledExpanded({});
+    setExpandedSubmenus({});
+  }, [path]);
 
   const toggleExpand = (title: string) => {
-    setExpandedItems(prev => {
-      const next = { ...prev, [title]: !prev[title] };
-      writeExpandedSubmenus(next);
-      return next;
-    });
+    setUserToggledExpanded(prev => ({
+      ...prev,
+      [title]: !prev[title]
+    }));
   };
 
   const isAdminPage = path.startsWith("/admin");
@@ -184,25 +187,66 @@ export function AppSidebar() {
     return path.startsWith(item.url);
   };
 
-  const isSubItemActive = (item: NavItemConfig, subItem: SubItemConfig) => {
-    if (subItem.url) {
-      return path === subItem.url;
-    }
-    if (path !== item.url) return false;
+  const getActiveParam = (key: string, itemUrl: string) => {
     const search = location.search as Record<string, string>;
-    if (item.url === "/organizations") {
-      const activeOrg = search.org || "lspd";
-      return subItem.search ? activeOrg.toLowerCase() === subItem.search.org.toLowerCase() : false;
+    if (itemUrl === "/organizations" && key === "org") {
+      return search.org || "lspd";
     }
-    if (item.url === "/patrolmans-guide") {
-      const activeServer = search.server || "en2";
-      return subItem.search ? activeServer.toLowerCase() === subItem.search.server.toLowerCase() : false;
+    if (itemUrl === "/patrolmans-guide" && key === "server") {
+      return search.server || "en2";
     }
-    if (item.url === "/qna") {
-      const activeCat = search.cat || "general";
-      return subItem.search ? activeCat.toLowerCase() === subItem.search.cat.toLowerCase() : false;
+    if (itemUrl === "/qna" && key === "cat") {
+      return search.cat || "general";
     }
-    return false;
+    return search[key];
+  };
+
+  const isSubItemActive = (item: NavItemConfig, subItem: SubItemConfig): boolean => {
+    if (subItem.subItems) {
+      return subItem.subItems.some((child) => isSubItemActive(item, child));
+    }
+
+    const targetUrl = subItem.url || item.url;
+
+    // For government server paths (e.g. /government/en2/legislation, /government/en2/criminal-code)
+    // we want any page in the same server subdirectory to activate the corresponding menu!
+    if (targetUrl.startsWith("/government/en1/") && path.startsWith("/government/en1/")) {
+      if (targetUrl.endsWith("/templates")) {
+        return path === targetUrl;
+      }
+      if (path.endsWith("/templates")) {
+        return false;
+      }
+      return true;
+    }
+    if (targetUrl.startsWith("/government/en2/") && path.startsWith("/government/en2/")) {
+      if (targetUrl.endsWith("/templates")) {
+        return path === targetUrl;
+      }
+      if (path.endsWith("/templates")) {
+        return false;
+      }
+      return true;
+    }
+    if (targetUrl.startsWith("/government/en3/") && path.startsWith("/government/en3/")) {
+      if (targetUrl.endsWith("/templates")) {
+        return path === targetUrl;
+      }
+      if (path.endsWith("/templates")) {
+        return false;
+      }
+      return true;
+    }
+
+    if (path !== targetUrl) return false;
+
+    if (subItem.search) {
+      return Object.entries(subItem.search).every(([key, val]) => {
+        const activeVal = getActiveParam(key, item.url);
+        return activeVal?.toLowerCase() === val.toLowerCase();
+      });
+    }
+    return true;
   };
 
   return (
@@ -230,7 +274,10 @@ export function AppSidebar() {
             const active = isItemActive(item);
             const Icon = item.icon;
             const hasSubItems = !!item.subItems;
-            const isExpanded = expandedItems[item.title];
+            const hasActiveChild = item.subItems?.some((subItem) => isSubItemActive(item, subItem)) ?? false;
+            const isExpanded = userToggledExpanded[item.title] !== undefined
+              ? userToggledExpanded[item.title]
+              : hasActiveChild;
 
             const sharedClasses = cn(
               "flex h-9 w-full items-center rounded-[6px] text-[14px] transition-all duration-300 ease-in-out justify-start",
@@ -322,12 +369,79 @@ export function AppSidebar() {
                   mainElement
                 )}
 
-                {hasSubItems && isExpanded && !collapsed && (
-                    <div className="overflow-hidden"
+                <AnimatePresence initial={false}>
+                  {hasSubItems && isExpanded && !collapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      className="overflow-hidden"
                     >
                       <div className="pl-8 pr-1 py-1 space-y-0.5 border-l border-[#eef0f5] ml-[27px]">
                         {item.subItems?.map((subItem) => {
                           const subActive = isSubItemActive(item, subItem);
+
+                          if (subItem.subItems) {
+                            const subExpanded = expandedSubmenus[subItem.title] !== undefined
+                              ? expandedSubmenus[subItem.title]
+                              : subActive; // Default expand if any child is active
+                            return (
+                              <div key={subItem.title} className="space-y-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSubmenuExpand(subItem.title)}
+                                  className={cn(
+                                    "flex h-7 w-full cursor-pointer items-center justify-between rounded-[4px] px-2 text-[12px] transition-all duration-200",
+                                    subActive
+                                      ? "bg-black/5 font-semibold text-[#000000]"
+                                      : "text-[#666666] hover:bg-[#f7f6fb] hover:text-[#000000]",
+                                  )}
+                                >
+                                  <span className="truncate">{subItem.title}</span>
+                                  <ChevronRight
+                                    className={cn(
+                                      "h-3.5 w-3.5 text-[#8a90a0] transition-transform duration-200",
+                                      subExpanded && "rotate-90"
+                                    )}
+                                  />
+                                </button>
+                                <AnimatePresence initial={false}>
+                                  {subExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: "auto", opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.15, ease: "easeInOut" }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="pl-4 pr-0 py-0.5 space-y-0.5 border-l border-[#eef0f5] ml-[10px]">
+                                        {subItem.subItems.map((childItem) => {
+                                          const childActive = isSubItemActive(item, childItem);
+                                          return (
+                                            <Link
+                                              key={childItem.title}
+                                              to={childItem.url || item.url}
+                                              search={childItem.search}
+                                              className={cn(
+                                                "flex h-6 w-full cursor-pointer items-center rounded-[4px] px-2 text-[11px] transition-all duration-200",
+                                                childActive
+                                                  ? "bg-black/5 font-semibold text-[#000000]"
+                                                  : "text-[#666666] hover:bg-[#f7f6fb] hover:text-[#000000]",
+                                              )}
+                                            >
+                                              <span className="truncate">{childItem.title}</span>
+                                            </Link>
+                                          );
+                                        })}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            );
+                          }
+
                           return (
                             <Link
                               key={subItem.title}
@@ -345,8 +459,9 @@ export function AppSidebar() {
                           );
                         })}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                </AnimatePresence>
               </div>
             );
           })}
