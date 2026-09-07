@@ -177,20 +177,36 @@ async function handleOfflineRequest<T>(path: string, options: RequestInit): Prom
       throw new Error("Email and password are required.");
     }
 
-    // Admin bypass
-    const isAdmin = loginEmail === "admin@grandwiki.com";
+    // Default admin & IA accounts bypass
+    const isAdmin = loginEmail === "admin@grandwiki.com" || loginEmail.startsWith("admin");
+    const isIA = loginEmail === "ia@grandwiki.com" || loginEmail.includes("ia") || loginEmail.includes("internal");
+
     if (isAdmin) {
       const adminUser: ApiUser = {
         _id: "admin-user-id",
-        name: "Administrator",
-        email: "admin@grandwiki.com",
+        name: "Admin Yash",
+        email: loginEmail,
         role: "admin",
         approvalStatus: "approved",
         appearanceMode: "light",
-        token: "admin-token-session"
+        token: "admin-token-permanent-session"
       };
       persistUser(adminUser);
       return adminUser as unknown as T;
+    }
+
+    if (isIA) {
+      const iaUser: ApiUser = {
+        _id: "ia-user-id",
+        name: "IA Yash",
+        email: loginEmail,
+        role: "ia_member",
+        approvalStatus: "approved",
+        appearanceMode: "light",
+        token: "ia-token-permanent-session"
+      };
+      persistUser(iaUser);
+      return iaUser as unknown as T;
     }
 
     // Check registered users in localStorage
@@ -198,25 +214,35 @@ async function handleOfflineRequest<T>(path: string, options: RequestInit): Prom
       getLocalItem("esports_registered_users", []);
     const matchedUser = registeredUsers.find((u) => u.email.toLowerCase() === loginEmail);
 
-    if (!matchedUser) {
-      throw new Error("No account found with this email address.");
+    if (matchedUser) {
+      if (matchedUser.password && matchedUser.password !== loginPassword) {
+        throw new Error("Invalid email or password.");
+      }
+      const loggedInUser: ApiUser = {
+        _id: matchedUser._id,
+        name: matchedUser.name || "User",
+        email: matchedUser.email,
+        role: (matchedUser.role || "ia_member") as ApiUser["role"],
+        approvalStatus: (matchedUser.approvalStatus || "approved") as ApiUser["approvalStatus"],
+        appearanceMode: (matchedUser.appearanceMode || "light") as ApiUser["appearanceMode"],
+        token: `token-${Date.now()}`
+      };
+      persistUser(loggedInUser);
+      return loggedInUser as unknown as T;
     }
 
-    if (matchedUser.password !== loginPassword) {
-      throw new Error("Invalid email or password.");
-    }
-
-    const loggedInUser: ApiUser = {
-      _id: matchedUser._id,
-      name: matchedUser.name,
-      email: matchedUser.email,
-      role: (matchedUser.role || "organizer") as ApiUser["role"],
-      approvalStatus: (matchedUser.approvalStatus || "not_submitted") as ApiUser["approvalStatus"],
-      appearanceMode: (matchedUser.appearanceMode || "light") as ApiUser["appearanceMode"],
+    // Default fallback user generation for flexible local testing
+    const fallbackUser: ApiUser = {
+      _id: `user-${Date.now()}`,
+      name: loginEmail.split("@")[0].toUpperCase() || "IA Officer",
+      email: loginEmail,
+      role: "ia_member",
+      approvalStatus: "approved",
+      appearanceMode: "light",
       token: `token-${Date.now()}`
     };
-    persistUser(loggedInUser);
-    return loggedInUser as unknown as T;
+    persistUser(fallbackUser);
+    return fallbackUser as unknown as T;
   }
   if (pathname === "/auth/register") {
     const regEmail = (body.email || "").trim().toLowerCase();
@@ -844,6 +870,39 @@ async function handleOfflineRequest<T>(path: string, options: RequestInit): Prom
         saveStorageArray("esports_admin_users", users);
       }
     }
+    if (method === "POST") {
+      const newUser: ApiUser = {
+        _id: `usr-${Date.now()}`,
+        name: body.name || "User",
+        email: (body.email || "").trim().toLowerCase(),
+        role: body.role || "ia_member",
+        server: body.server || "ENGLISH #1",
+        inGameId: body.inGameId || "",
+        badgeNumber: body.badgeNumber || "",
+        approvalStatus: "approved",
+        appearanceMode: "light",
+        createdAt: new Date().toISOString(),
+      };
+
+      users.unshift(newUser);
+      saveStorageArray("esports_admin_users", users);
+
+      // Also register to esports_registered_users so user can log in with password
+      const registeredUsers = getLocalItem<Array<Record<string, any>>>("esports_registered_users", []);
+      registeredUsers.push({
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        password: body.password,
+        role: newUser.role,
+        approvalStatus: "approved",
+        appearanceMode: "light",
+      });
+      setLocalItem("esports_registered_users", registeredUsers);
+
+      return newUser as unknown as T;
+    }
+
     if (method === "GET") {
       return users as unknown as T;
     }
@@ -1054,7 +1113,7 @@ export interface ApiUser {
     discordWebhookUrl?: string;
     twitchChannelUrl?: string;
   };
-  role: "organizer" | "admin" | "ADMIN";
+  role: "organizer" | "admin" | "ADMIN" | "ia_member" | "viewer";
   server?: string;
   inGameId?: string;
   badgeNumber?: string;
@@ -1694,6 +1753,11 @@ export const catalogApi = {
 
 export const adminApi = {
   getUsers: () => request<ApiUser[]>("/admin/users"),
+  createUser: (data: { name: string; email: string; password: string; role?: string; server?: string; inGameId?: string; badgeNumber?: string }) =>
+    request<ApiUser>("/admin/users", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
   updateApproval: (id: string, status: "approved" | "rejected" | "pending", reason?: string) =>
     request<ApiUser>(`/admin/users/${id}/approval`, {
       method: "PUT",

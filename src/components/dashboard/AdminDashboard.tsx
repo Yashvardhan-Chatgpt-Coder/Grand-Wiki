@@ -4,7 +4,7 @@ import { OrganizerLayout } from "@/components/dashboard/OrganizerLayout";
 import { SoftwareHeader } from "@/components/dashboard/SoftwareHeader";
 import { adminApi, notificationsApi, type ApiNotification } from "@/lib/api";
 import { queue } from "@/components/ui/Toast";
-import { Trash2, Edit2, Plus, Heart, Bell, Clock, Link as LinkIcon } from "lucide-react";
+import { Trash2, Edit2, Plus, Heart, Bell, Clock, Link as LinkIcon, Users, Key, Shield, UserPlus } from "lucide-react";
 import { CountUp } from "@/components/dashboard/CountUp";
 import { formatDonationAmount } from "@/lib/philanthropists";
 import * as LucideIcons from "lucide-react";
@@ -29,6 +29,10 @@ export function AdminDashboard() {
 
   if (tab === "notifications") {
     return <NotificationsTab />;
+  }
+
+  if (tab === "accounts") {
+    return <AccountsTab />;
   }
 
   return <PhilanthropistsTab />;
@@ -919,6 +923,369 @@ function NotificationsTab() {
                 className="flex-1 rounded-[10px] bg-black px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-zinc-900 transition-colors"
               >
                 {editingId ? "Publish Now" : "Create & Publish"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="rounded-[10px] border border-[#e2e5ec] px-4 py-2.5 text-[13px] font-semibold text-[#4b5563] hover:bg-[#f8fafc] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </OrganizerLayout>
+  );
+}
+
+function AccountsTab() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "ia_member",
+    server: "ENGLISH #1",
+    inGameId: "",
+    badgeNumber: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadUsers = async () => {
+    try {
+      const data = await adminApi.getUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error(error);
+      queue.add(
+        { title: "Error", description: "Failed to load accounts", variant: "error" },
+        { timeout: 3000 }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
+      queue.add(
+        { title: "Validation Error", description: "Name, ID/Email, and Password are required.", variant: "error" },
+        { timeout: 3000 }
+      );
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      queue.add(
+        { title: "Validation Error", description: "Password must be at least 6 characters.", variant: "error" },
+        { timeout: 3000 }
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await adminApi.createUser({
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: formData.role,
+        server: formData.server,
+        inGameId: formData.inGameId.trim(),
+        badgeNumber: formData.badgeNumber.trim(),
+      });
+
+      queue.add(
+        {
+          title: "Account Created",
+          description: `Account for ${formData.name} created successfully. They can now log in.`,
+          variant: "success",
+        },
+        { timeout: 3500 }
+      );
+
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        role: "ia_member",
+        server: "ENGLISH #1",
+        inGameId: "",
+        badgeNumber: "",
+      });
+      setModalOpen(false);
+      loadUsers();
+    } catch (error: any) {
+      console.error(error);
+      queue.add(
+        {
+          title: "Creation Failed",
+          description: error?.message || "Failed to create account.",
+          variant: "error",
+        },
+        { timeout: 3500 }
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete the account for "${name}"?`)) return;
+
+    try {
+      await adminApi.deleteUser(id);
+      queue.add(
+        { title: "Deleted", description: "Account removed successfully", variant: "success" },
+        { timeout: 3000 }
+      );
+      loadUsers();
+    } catch (error) {
+      console.error(error);
+      queue.add(
+        { title: "Error", description: "Failed to delete account", variant: "error" },
+        { timeout: 3000 }
+      );
+    }
+  };
+
+  return (
+    <OrganizerLayout header={<SoftwareHeader />}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-[800px] space-y-10 p-8">
+            {/* Header */}
+            <div className="space-y-4 text-center">
+              <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+
+              <div>
+                <p className="text-[13px] font-medium uppercase tracking-wider text-[#8a90a0]">
+                  User & IA Access Control
+                </p>
+                <h1 className="mt-2 block text-[36px] font-bold leading-none tracking-tight text-[#000000]">
+                  Manage Accounts
+                </h1>
+              </div>
+
+              <button
+                onClick={() => setModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-[8px] bg-black px-4 py-2 text-[14px] font-medium text-white hover:bg-zinc-800 transition-colors shadow-xs"
+              >
+                <UserPlus className="h-4 w-4" />
+                Create New Account
+              </button>
+            </div>
+
+            {/* Accounts List */}
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[18px] font-semibold tracking-tight text-[#000000]">
+                  All Registered Accounts ({users.length})
+                </h2>
+              </div>
+
+              <div className="rounded-[10px] border border-[#e2e5ec] bg-white p-5 space-y-3">
+                {loading ? (
+                  <div className="text-center py-8">
+                    <p className="text-[14px] text-[#8a90a0]">Loading accounts...</p>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-[14px] text-[#8a90a0]">
+                      No accounts found. Click "Create New Account" to add one.
+                    </p>
+                  </div>
+                ) : (
+                  users.map((accountUser, index) => (
+                    <div key={accountUser._id || accountUser.email || index}>
+                      <div className="flex items-center justify-between py-2.5">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-[15px] font-semibold text-[#000000]">
+                              {accountUser.name}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                accountUser.role === "admin"
+                                  ? "bg-purple-100 text-purple-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
+                            >
+                              {accountUser.role === "admin" ? "ADMIN" : "IA MEMBER"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 mt-1">
+                            <span className="text-[13px] text-[#8a90a0]">
+                              {accountUser.email}
+                            </span>
+                            {accountUser.inGameId && (
+                              <span className="text-[12px] text-[#8a90a0]">
+                                ID: {accountUser.inGameId}
+                              </span>
+                            )}
+                            {accountUser.server && (
+                              <span className="text-[12px] text-[#8a90a0]">
+                                {accountUser.server}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {accountUser.email !== "admin@grandwiki.com" && (
+                            <button
+                              onClick={() =>
+                                handleDelete(accountUser._id || accountUser.email, accountUser.name)
+                              }
+                              className="rounded-[6px] p-1.5 text-red-500 hover:bg-red-50 transition-colors"
+                              title="Delete Account"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {index < users.length - 1 && (
+                        <div className="border-b border-[#f1f3f7] my-1" />
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Create Account Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-[500px] p-6 rounded-[16px]">
+          <DialogTitle className="text-[20px] font-bold text-[#000000] mb-4">
+            Create Account (ID & Password)
+          </DialogTitle>
+
+          <form onSubmit={handleCreateAccount} className="space-y-4">
+            <div>
+              <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                placeholder="e.g. Yashvardhan Sharma"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                  Login ID / Email *
+                </label>
+                <input
+                  type="text"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                  placeholder="user@example.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                  Password *
+                </label>
+                <input
+                  type="text"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                  placeholder="At least 6 characters"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                  Role
+                </label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                >
+                  <option value="ia_member">IA Member</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                  Server
+                </label>
+                <select
+                  value={formData.server}
+                  onChange={(e) => setFormData({ ...formData, server: e.target.value })}
+                  className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                >
+                  <option value="ENGLISH #1">ENGLISH #1</option>
+                  <option value="ENGLISH #2">ENGLISH #2</option>
+                  <option value="ENGLISH #3">ENGLISH #3</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                  In-Game ID (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.inGameId}
+                  onChange={(e) => setFormData({ ...formData, inGameId: e.target.value })}
+                  className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                  placeholder="e.g. 12345"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#000000] mb-1">
+                  Badge / Call-sign (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.badgeNumber}
+                  onChange={(e) => setFormData({ ...formData, badgeNumber: e.target.value })}
+                  className="w-full rounded-[10px] border border-[#e2e5ec] bg-white px-3.5 py-2.5 text-[13px] text-[#000000] focus:border-black focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                  placeholder="e.g. IA-01"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 rounded-[10px] bg-black px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-zinc-900 transition-colors disabled:opacity-50"
+              >
+                {submitting ? "Creating..." : "Create Account"}
               </button>
               <button
                 type="button"

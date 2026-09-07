@@ -197,12 +197,12 @@ export function AppSelect({
                 : "cursor-pointer bg-white text-[#000000] hover:border-[#b0b7c3] focus:border-[#000000]"
             }`}
           >
-            <div className="flex items-center gap-2 min-w-0 pr-2">
+            <div className="flex h-full items-center gap-2 min-w-0 pr-2">
               {selectedOption?.iconUrl && (
                 <img src={selectedOption.iconUrl} alt="" className="h-3.5 w-5 object-contain rounded-xs shrink-0" />
               )}
               <span
-                className={`min-w-0 truncate ${
+                className={`block min-w-0 truncate leading-normal ${
                   disabled ? "text-[#9aa1b0]" : selectedOption ? "text-[#000000]" : "text-[#9aa1b0]"
                 }`}
               >
@@ -210,7 +210,7 @@ export function AppSelect({
               </span>
             </div>
             <ChevronDown
-              className={`text-[#9aa1b0] transition-transform duration-200 ${
+              className={`text-[#9aa1b0] shrink-0 transition-transform duration-200 ${
                 compact ? "h-3.5 w-3.5" : "h-4 w-4"
               } ${open ? "rotate-180" : ""}`}
             />
@@ -227,7 +227,7 @@ export function AppSelect({
                 avoidCollisions={false}
                 asChild
                 onKeyDown={handleKeyDown}
-                className="z-[90]"
+                className="z-[9999]"
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96, y: -6 }}

@@ -4,42 +4,75 @@ import {
   User,
   ChevronRight,
   Palette,
-  FileText,
+  Mail,
+  Building2,
+  Award,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { queue } from "@/components/ui/Toast";
 import { AppSelect } from "@/components/dashboard/AppSelect";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { iaApi, iaSession, type IaUser } from "@/lib/internal-affairs-api";
 
 type ProfileSettingsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAdmin: boolean;
+  onUserUpdated?: () => void;
 };
 
 type TabId = "profile" | "appearance";
 type AppearanceMode = "system" | "light" | "dark";
 
-export function ProfileSettingsModal({ open, onOpenChange, isAdmin }: ProfileSettingsModalProps) {
-  const { user, updateUser } = useCurrentUser();
+export function ProfileSettingsModal({ open, onOpenChange, isAdmin, onUserUpdated }: ProfileSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>("profile");
 
-  // Form states
+  // User fields (matching account creation fields)
+  const [currentUser, setCurrentUser] = useState<IaUser | null>(null);
   const [name, setName] = useState("");
-  const [organizationName, setOrganizationName] = useState("");
-  const [inGameId, setInGameId] = useState("");
-  const [badgeNumber, setBadgeNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [organisation, setOrganisation] = useState("");
+  const [rank, setRank] = useState("");
+  const [rankOptions, setRankOptions] = useState<{ label: string; value: string }[]>([]);
+
+  // Appearance state
   const [appearanceMode, setAppearanceMode] = useState<AppearanceMode>("system");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setName(user.name || "");
-    setOrganizationName(user.organization || "LSPD");
-    setInGameId(user.inGameId || "");
-    setBadgeNumber(user.badgeNumber || "");
-    setAppearanceMode(user.appearanceMode || "system");
-  }, [open, user]);
+
+    // Load active session user
+    const session = iaSession.get();
+    if (session?.user) {
+      setCurrentUser(session.user);
+      setName(session.user.name || "");
+      setEmail(session.user.email || "");
+      setOrganisation(session.user.organisation || "");
+      setRank(session.user.rank || "");
+    }
+
+    // Load available ranks from DB settings
+    iaApi
+      .getSettings()
+      .then((settings) => {
+        if (settings?.ranks) {
+          const options = settings.ranks.map((r) => ({ label: r, value: r }));
+          setRankOptions(options);
+        }
+      })
+      .catch(() => {
+        // Fallback default ranks if settings request fails
+        setRankOptions([
+          { label: "Internal Affairs Director", value: "Internal Affairs Director" },
+          { label: "Internal Affairs Deputy Director", value: "Internal Affairs Deputy Director" },
+          { label: "Internal Affairs Lead Agent", value: "Internal Affairs Lead Agent" },
+          { label: "Internal Affairs Senior Agent", value: "Internal Affairs Senior Agent" },
+          { label: "Internal Affairs Agent", value: "Internal Affairs Agent" },
+          { label: "Internal Affairs Junior Agent", value: "Internal Affairs Junior Agent" },
+        ]);
+      });
+  }, [open]);
 
   const handleClose = () => {
     window.dispatchEvent(new CustomEvent("esports:appearance-preview", { detail: undefined }));
@@ -50,61 +83,55 @@ export function ProfileSettingsModal({ open, onOpenChange, isAdmin }: ProfileSet
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isAdmin && !name.trim()) {
-      queue.add(
-        { title: "Validation Error", description: "Name cannot be left empty.", variant: "error" },
-        { timeout: 3000 },
-      );
-      return;
-    }
+    if (activeTab === "profile" && !isAdmin) {
+      if (!rank.trim()) {
+        queue.add(
+          { title: "Validation Error", description: "Rank cannot be left empty.", variant: "error" },
+          { timeout: 3000 },
+        );
+        return;
+      }
 
-    if (!isAdmin && !organizationName.trim()) {
-      queue.add(
-        {
-          title: "Validation Error",
-          description: "Organization name cannot be left empty.",
-          variant: "error",
-        },
-        { timeout: 3000 },
-      );
-      return;
-    }
+      setIsSaving(true);
 
-    setIsSaving(true);
+      try {
+        const response = await iaApi.updateProfile({ rank: rank.trim() });
+        queue.add(
+          {
+            title: "Profile Updated",
+            description: `Your rank was updated to "${response.user.rank}" in the database.`,
+            variant: "success",
+          },
+          { timeout: 3000 },
+        );
 
-    try {
-      // Save to localStorage
-      const updatedUser = {
-        name: name.trim(),
-        organization: organizationName.trim(),
-        inGameId: inGameId.trim(),
-        badgeNumber: badgeNumber.trim(),
-        appearanceMode,
-      };
-
-      updateUser(updatedUser);
-
+        window.dispatchEvent(new CustomEvent("ia:user-updated"));
+        if (onUserUpdated) onUserUpdated();
+        handleClose();
+      } catch (error) {
+        console.error(error);
+        queue.add(
+          {
+            title: "Could not save profile",
+            description: error instanceof Error ? error.message : "An error occurred updating profile.",
+            variant: "error",
+          },
+          { timeout: 3000 },
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      // Appearance mode save
       queue.add(
         {
           title: "Settings Saved",
-          description: "Your profile configurations were updated successfully.",
+          description: "Your settings have been saved.",
           variant: "success",
         },
         { timeout: 3000 },
       );
       handleClose();
-    } catch (error) {
-      console.error(error);
-      queue.add(
-        {
-          title: "Could not save settings",
-          description: error instanceof Error ? error.message : "An error occurred.",
-          variant: "error",
-        },
-        { timeout: 3000 },
-      );
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -146,7 +173,7 @@ export function ProfileSettingsModal({ open, onOpenChange, isAdmin }: ProfileSet
         {/* Top Header */}
         <div className="flex h-[60px] shrink-0 items-center justify-between border-b border-[#f0f1f3] px-6 bg-[#f9fbfc]">
           <div>
-            <h2 className="text-[15px] font-bold text-[#000000]">Settings</h2>
+            <h2 className="text-[15px] font-bold text-[#000000]">Profile & Settings</h2>
           </div>
         </div>
 
@@ -173,78 +200,104 @@ export function ProfileSettingsModal({ open, onOpenChange, isAdmin }: ProfileSet
                 {activeTab === "profile" && !isAdmin && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-[14px] font-bold text-[#000000]">Profile Information</h3>
+                      <h3 className="text-[14px] font-bold text-[#000000]">Account & Profile Information</h3>
                       <p className="text-[11px] text-[#888888] mt-0.5">
-                        Customize your public information and preferences.
+                        These fields match your Internal Affairs account credentials. Only rank can be edited by members.
                       </p>
                     </div>
 
                     <div className="space-y-4 max-w-[480px]">
+                      {/* Name - Read Only */}
                       <div>
-                        <label className="mb-1 block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
-                          Full Name <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative flex items-center gap-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
+                            Full Name
+                          </label>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#8a90a0]">
+                            <Lock className="h-3 w-3" /> Admin Only
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
                           <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
                           <input
                             type="text"
+                            disabled
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Enter your name"
-                            className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none focus:border-[#000000] transition-colors"
+                            className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-[#f7f8fb] pl-9 pr-3 text-[13px] text-[#5c6479] outline-none cursor-not-allowed"
                           />
                         </div>
                       </div>
 
+                      {/* Email - Read Only */}
                       <div>
-                        <label className="mb-1 block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
-                          In-Game ID
-                        </label>
-                        <div className="relative flex items-center gap-2">
-                          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
+                            Email Address
+                          </label>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#8a90a0]">
+                            <Lock className="h-3 w-3" /> Admin Only
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
+                          <input
+                            type="email"
+                            disabled
+                            value={email}
+                            className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-[#f7f8fb] pl-9 pr-3 text-[13px] text-[#5c6479] outline-none cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Organisation - Read Only */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
+                            Organisation
+                          </label>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#8a90a0]">
+                            <Lock className="h-3 w-3" /> Admin Only
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
                           <input
                             type="text"
-                            value={inGameId}
-                            onChange={(e) => setInGameId(e.target.value)}
-                            placeholder="Enter your in-game ID"
-                            className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none focus:border-[#000000] transition-colors"
+                            disabled
+                            value={organisation}
+                            className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-[#f7f8fb] pl-9 pr-3 text-[13px] text-[#5c6479] outline-none cursor-not-allowed"
                           />
                         </div>
                       </div>
 
+                      {/* Rank - EDITABLE */}
                       <div>
-                        <label className="mb-1 block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
-                          Badge Number
-                        </label>
-                        <div className="relative flex items-center gap-2">
-                          <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
-                          <input
-                            type="text"
-                            value={badgeNumber}
-                            onChange={(e) => setBadgeNumber(e.target.value)}
-                            placeholder="Enter your badge number"
-                            className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none focus:border-[#000000] transition-colors"
-                          />
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
+                            Rank <span className="text-[#b42318]">*</span>
+                          </label>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            Editable
+                          </span>
                         </div>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
-                          Organization <span className="text-red-500">*</span>
-                        </label>
-                        <AppSelect
-                          value={organizationName}
-                          onChange={setOrganizationName}
-                          options={[
-                            { label: "LSPD - Los Santos Police Department", value: "LSPD" },
-                            { label: "FIB - Federal Investigation Bureau", value: "FIB" },
-                            { label: "SAHP - San Andreas Highway Patrol", value: "SAHP" },
-                            { label: "NG - National Guard", value: "NG" },
-                            { label: "Government", value: "Government" },
-                            { label: "EMS - Emergency Medical Services", value: "EMS" },
-                            { label: "Lifeinvader", value: "Lifeinvader" }
-                          ]}
-                        />
+                        {rankOptions.length > 0 ? (
+                          <AppSelect
+                            value={rank}
+                            onChange={setRank}
+                            options={rankOptions}
+                          />
+                        ) : (
+                          <div className="relative flex items-center">
+                            <Award className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa1b0]" />
+                            <input
+                              type="text"
+                              value={rank}
+                              onChange={(e) => setRank(e.target.value)}
+                              placeholder="Enter your rank"
+                              className="h-[38px] w-full rounded-[8px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] text-[#000000] outline-none focus:border-[#000000] transition-colors"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -9,7 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-
+import { Monitor, Laptop } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { MyToastRegion } from "@/components/ui/Toast";
@@ -196,6 +196,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function DesktopOnlyGuard() {
+  return (
+    <div className="fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-white p-6 text-center lg:hidden dark:bg-[#000000]">
+      <div className="max-w-md space-y-2">
+        <h1 className="text-[18px] font-semibold text-[#000000] dark:text-white">
+          Desktop Only
+        </h1>
+        <p className="text-[14px] text-[#666666] dark:text-[#888991]">
+          This website is designed to be used on desktop devices only.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // Authentication guard disabled - open access to all
 function OnboardingGuard({ pathname }: { pathname: string }) {
   return null;
@@ -210,6 +225,7 @@ function RootComponent() {
       <GoogleAnalytics />
       <OnboardingGuard pathname={location.pathname} />
       <ThemeClassManager pathname={location.pathname} />
+      <DesktopOnlyGuard />
       <Outlet />
       <MyToastRegion />
     </QueryClientProvider>

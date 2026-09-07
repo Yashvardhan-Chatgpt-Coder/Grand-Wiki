@@ -20,6 +20,8 @@ import {
   FileText,
   Building,
   Calendar,
+  LayoutDashboard,
+  History,
   type LucideIcon
 } from "lucide-react";
 import { SidebarCollapseButton } from "@/components/dashboard/SidebarCollapseButton";
@@ -84,6 +86,7 @@ const mainNavConfig: NavItemConfig[] = [
       { title: "Lifeinvader", search: { org: "lifeinvader" } }
     ]
   },
+  { title: "Internal Affairs", url: "/internal-affairs", icon: ShieldCheck },
   {
     title: "Government",
     url: "/government/legislation",
@@ -134,9 +137,23 @@ const mainNavConfig: NavItemConfig[] = [
   { title: "Pinned Commands", url: "/pinned-commands", icon: Pin }
 ];
 
+const iaNavConfig: NavItemConfig[] = [
+  { title: "IA Dashboard", url: "/internal-affairs", search: { tab: "dashboard" }, icon: LayoutDashboard },
+  { title: "Members", url: "/internal-affairs", search: { tab: "members" }, icon: Users },
+  { title: "Archives", url: "/internal-affairs", search: { tab: "archives" }, icon: History },
+  { title: "Daily Log Check", url: "/internal-affairs", search: { tab: "daily" }, icon: FileText },
+  { title: "License Checks", url: "/internal-affairs", search: { tab: "licenses" }, icon: ShieldCheck },
+  { title: "Background Checks", url: "/internal-affairs", search: { tab: "background" }, icon: FileText },
+  { title: "Bodycam Checks", url: "/internal-affairs", search: { tab: "bodycam" }, icon: History },
+  { title: "Audit Logs", url: "/internal-affairs", search: { tab: "audit" }, icon: History },
+  { title: "Admin Panel", url: "/internal-affairs", search: { tab: "admin" }, icon: ShieldCheck },
+  { title: "Back to Grand Wiki", url: "/", icon: Home }
+];
+
 const adminNavConfig: NavItemConfig[] = [
   { title: "Philanthropists", url: "/admin", search: { tab: "philanthropists" }, icon: Heart },
   { title: "Notifications", url: "/admin", search: { tab: "notifications" }, icon: Bell },
+  { title: "Accounts", url: "/admin", search: { tab: "accounts" }, icon: Users },
   { title: "Back to Dashboard", url: "/", icon: Home }
 ];
 
@@ -170,13 +187,32 @@ export function AppSidebar() {
     }));
   };
 
+  const isIaPage = path.startsWith("/internal-affairs");
   const isAdminPage = path.startsWith("/admin");
+
+  const iaSession = (() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return JSON.parse(localStorage.getItem("internal_affairs_session") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const isIaAdmin = Boolean(iaSession?.user?.isAdmin);
+  const filteredIaNavConfig = iaNavConfig.filter((item) => item.search?.tab !== "admin" || isIaAdmin);
+
   const userNavConfig = user?.role === "admin"
     ? [...mainNavConfig, { title: "Admin Panel", url: "/admin", icon: ShieldCheck }]
     : mainNavConfig;
-  const itemsToRender = isAdminPage ? adminNavConfig : userNavConfig;
+  const itemsToRender = isIaPage ? filteredIaNavConfig : isAdminPage ? adminNavConfig : userNavConfig;
 
   const isItemActive = (item: NavItemConfig) => {
+    if (isIaPage) {
+      if (item.url === "/") return false;
+      const search = location.search as Record<string, string>;
+      const currentTab = search.tab || "dashboard";
+      return item.search?.tab === currentTab;
+    }
     if (isAdminPage) {
       if (item.url === "/") return false;
       const search = location.search as Record<string, string>;

@@ -34,7 +34,10 @@ export function AppPopupWindow({
   const titleId = useId();
   const descriptionId = useId();
   const popupRef = useRef<HTMLDivElement>(null);
+  const onOpenChangeRef = useRef(onOpenChange);
   const [mounted, setMounted] = useState(false);
+
+  onOpenChangeRef.current = onOpenChange;
 
   useEffect(() => {
     setMounted(true);
@@ -52,7 +55,7 @@ export function AppPopupWindow({
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        onOpenChange(false);
+        onOpenChangeRef.current(false);
       }
     };
 
@@ -61,7 +64,7 @@ export function AppPopupWindow({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   if (!mounted) return null;
 

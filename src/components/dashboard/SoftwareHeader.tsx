@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
   Heart,
@@ -30,7 +30,9 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   authApi,
   clearStoredUser,
+  getStoredUser,
 } from "@/lib/api";
+import type { IaUser } from "@/lib/internal-affairs-api";
 
 type SoftwareHeaderProps = {
   title: string;
@@ -210,6 +212,32 @@ export function SoftwareHeader({
     }
   };
   const isAdmin = !!getStoredAdminUser();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const isIaPage = path.startsWith("/internal-affairs");
+  const storedUser = getStoredUser();
+  const showLogout = isAdmin || isIaPage || !!storedUser;
+
+  const [iaUser, setIaUser] = useState<IaUser | null>(() => {
+    try {
+      const raw = localStorage.getItem("internal_affairs_session");
+      return raw ? JSON.parse(raw)?.user || null : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      try {
+        const raw = localStorage.getItem("internal_affairs_session");
+        setIaUser(raw ? JSON.parse(raw)?.user || null : null);
+      } catch {
+        setIaUser(null);
+      }
+    };
+    window.addEventListener("ia:user-updated", handleUserUpdate);
+    return () => window.removeEventListener("ia:user-updated", handleUserUpdate);
+  }, []);
   
   const [notifOpen, setNotifOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -486,6 +514,9 @@ export function SoftwareHeader({
       .catch(() => null)
       .finally(() => {
         clearStoredUser();
+        if (isIaPage) {
+          localStorage.removeItem("internal_affairs_session");
+        }
         queue.add(
           {
             title: "Log Out",
@@ -494,7 +525,11 @@ export function SoftwareHeader({
           },
           { timeout: 3000 },
         );
-        navigate({ to: "/admin" });
+        if (isIaPage) {
+          navigate({ to: "/internal-affairs" });
+        } else {
+          navigate({ to: "/admin" });
+        }
       });
   };
 
@@ -989,8 +1024,23 @@ export function SoftwareHeader({
                   {/* User Profile Info Card */}
                   <div className="flex flex-col border-b border-[#f0f1f3] px-4 py-3 bg-[#f9fbfc]">
                     <span className="text-[13px] font-bold text-[#000000] truncate">
-                      {isAdmin ? "Admin Dashboard" : displayName}
+                      {iaUser ? iaUser.name : isAdmin ? "Admin Dashboard" : storedUser?.name || displayName}
                     </span>
+                    {(iaUser?.email || storedUser?.email) && (
+                      <span className="text-[11px] text-[#6b7280] truncate mt-0.5">
+                        {iaUser?.email || storedUser?.email}
+                      </span>
+                    )}
+                    {iaUser && (
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <span className="rounded bg-zinc-200/80 px-1.5 py-0.5 font-semibold text-black">
+                          {iaUser.rank}
+                        </span>
+                        <span className="text-[10px] text-[#8a90a0]">
+                          {iaUser.organisation}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Menu Items */}
@@ -1019,7 +1069,7 @@ export function SoftwareHeader({
                     </button>
                   </div>
 
-                  {isAdmin && (
+                  {showLogout && (
                     <>
                       <div className="h-px bg-[#f0f1f3] mx-1" />
 

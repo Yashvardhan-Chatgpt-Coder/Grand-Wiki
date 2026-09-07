@@ -19,6 +19,7 @@ import { Route as PatrolmansGuideRouteImport } from './routes/patrolmans-guide'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroductionRouteImport } from './routes/introduction'
+import { Route as InternalAffairsRouteImport } from './routes/internal-affairs'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DepartmentRadioRouteImport } from './routes/department-radio'
@@ -101,6 +102,11 @@ const LoginRoute = LoginRouteImport.update({
 const IntroductionRoute = IntroductionRouteImport.update({
   id: '/introduction',
   path: '/introduction',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InternalAffairsRoute = InternalAffairsRouteImport.update({
+  id: '/internal-affairs',
+  path: '/internal-affairs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuidesRoute = GuidesRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/department-radio': typeof DepartmentRadioRoute
   '/events': typeof EventsRoute
   '/guides': typeof GuidesRouteWithChildren
+  '/internal-affairs': typeof InternalAffairsRoute
   '/introduction': typeof IntroductionRoute
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
@@ -329,6 +336,7 @@ export interface FileRoutesByTo {
   '/department-radio': typeof DepartmentRadioRoute
   '/events': typeof EventsRoute
   '/guides': typeof GuidesRouteWithChildren
+  '/internal-affairs': typeof InternalAffairsRoute
   '/introduction': typeof IntroductionRoute
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/department-radio': typeof DepartmentRadioRoute
   '/events': typeof EventsRoute
   '/guides': typeof GuidesRouteWithChildren
+  '/internal-affairs': typeof InternalAffairsRoute
   '/introduction': typeof IntroductionRoute
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
@@ -421,6 +430,7 @@ export interface FileRouteTypes {
     | '/department-radio'
     | '/events'
     | '/guides'
+    | '/internal-affairs'
     | '/introduction'
     | '/login'
     | '/organizations'
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/department-radio'
     | '/events'
     | '/guides'
+    | '/internal-affairs'
     | '/introduction'
     | '/login'
     | '/organizations'
@@ -510,6 +521,7 @@ export interface FileRouteTypes {
     | '/department-radio'
     | '/events'
     | '/guides'
+    | '/internal-affairs'
     | '/introduction'
     | '/login'
     | '/organizations'
@@ -556,6 +568,7 @@ export interface RootRouteChildren {
   DepartmentRadioRoute: typeof DepartmentRadioRoute
   EventsRoute: typeof EventsRoute
   GuidesRoute: typeof GuidesRouteWithChildren
+  InternalAffairsRoute: typeof InternalAffairsRoute
   IntroductionRoute: typeof IntroductionRoute
   LoginRoute: typeof LoginRoute
   OrganizationsRoute: typeof OrganizationsRoute
@@ -660,6 +673,13 @@ declare module '@tanstack/react-router' {
       path: '/introduction'
       fullPath: '/introduction'
       preLoaderRoute: typeof IntroductionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/internal-affairs': {
+      id: '/internal-affairs'
+      path: '/internal-affairs'
+      fullPath: '/internal-affairs'
+      preLoaderRoute: typeof InternalAffairsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guides': {
@@ -931,6 +951,7 @@ const rootRouteChildren: RootRouteChildren = {
   DepartmentRadioRoute: DepartmentRadioRoute,
   EventsRoute: EventsRoute,
   GuidesRoute: GuidesRouteWithChildren,
+  InternalAffairsRoute: InternalAffairsRoute,
   IntroductionRoute: IntroductionRoute,
   LoginRoute: LoginRoute,
   OrganizationsRoute: OrganizationsRoute,

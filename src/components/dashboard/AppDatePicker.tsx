@@ -40,7 +40,7 @@ export function AppDatePicker({
           {dateValue ? format(dateValue, "PP") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="z-[140] w-auto p-0" align="start">
         <Calendar
           mode="single"
           selected={dateValue}

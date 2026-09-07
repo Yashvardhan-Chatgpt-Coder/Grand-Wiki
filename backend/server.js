@@ -8,6 +8,9 @@ const donationRoutes = require("./routes/donations");
 const adminRoutes = require("./routes/admin");
 const supportRoutes = require("./routes/support");
 const notificationRoutes = require("./routes/notifications");
+const internalAffairsRoutes = require("./routes/internalAffairs");
+const { connectInternalAffairsDatabase } = require("./config/internalAffairsDatabase");
+const { seedInternalAffairsAdmin } = require("./config/seedInternalAffairsAdmin");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -44,6 +47,7 @@ app.use("/api/donations", donationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/internal-affairs", internalAffairsRoutes);
 
 app.use("/api", (_req, res) => {
   res.status(404).json({
@@ -59,6 +63,8 @@ app.use(errorHandler);
 async function startServer() {
   try {
     await connectDatabase();
+    await connectInternalAffairsDatabase();
+    await seedInternalAffairsAdmin();
     await seedAdminUser();
     await seedDonations();
     app.listen(PORT, () => {

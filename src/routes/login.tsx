@@ -8,19 +8,31 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [{ title: "Log In | Grand Wiki" }],
   }),
-  beforeLoad: () => {
-    throw redirect({ to: "/admin" });
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    return {
+      redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+    };
   },
   component: Login,
 });
 
 function Login() {
+  const search = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = getStoredUser();
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || user?.token : null;
+    if (token && user) {
+      const destination = search?.redirect || "/internal-affairs";
+      navigate({ to: destination, replace: true });
+    }
+  }, [navigate, search]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,18 +73,8 @@ function Login() {
         { timeout: 3000 },
       );
 
-      const isAdmin = data?.role === "admin" || data?.role === "ADMIN" || data?.email?.toLowerCase().startsWith("admin");
-      if (isAdmin) {
-        navigate({ to: "/", replace: true });
-      } else {
-        const emailKey = data?.email ? `grand_wiki_onboarding_${data.email}` : "";
-        const status = emailKey ? localStorage.getItem(emailKey) : null;
-        if (data.approvalStatus !== "approved" && status !== "approved") {
-          navigate({ to: "/introduction", replace: true });
-        } else {
-          navigate({ to: "/", replace: true });
-        }
-      }
+      const targetDestination = search?.redirect || "/internal-affairs";
+      navigate({ to: targetDestination, replace: true });
     } catch (error) {
       console.error(error);
       queue.add(
@@ -172,10 +174,8 @@ function Login() {
             </button>
           </form>
 
-
-
           {/* Register Redirect */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-5">
             <p className="text-[12.5px] text-zinc-500">
               Don't Have An Account?{" "}
               <Link to="/signup" className="font-bold text-black hover:underline">
