@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 type AppPopupWindowProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: ReactNode;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;

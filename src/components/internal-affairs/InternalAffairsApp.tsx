@@ -889,7 +889,7 @@ function LicenseCheckView({
       <AppPopupWindow
         open={modalOpen}
         onOpenChange={(open) => !open && setModalOpen(false)}
-        title="Add License Check Record"
+        title={<span className="flex flex-wrap items-center gap-3"><span>Add License Check Record</span><span className="rounded-[5px] bg-[#f7f8fb] px-2 py-1 text-[11px] font-medium text-[#4d5568]">Check date: {londonToday()}</span></span>}
         description="Verify and record officer license statuses."
         className="max-w-[900px]"
         bodyClassName="min-h-0 overflow-hidden"
@@ -904,11 +904,6 @@ function LicenseCheckView({
         }
       >
         <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-          <div className="rounded-[8px] bg-[#f7f8fb] p-3 text-[13px]">
-            <span className="font-semibold text-[#000]">Check Date: </span>
-            <span className="font-mono text-[#000]">{londonToday()}</span>
-          </div>
-
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-[#9aa1b0]" />
             <input
@@ -1138,7 +1133,7 @@ function BackgroundCheckView({
       <AppPopupWindow
         open={modalOpen}
         onOpenChange={(open) => !open && setModalOpen(false)}
-        title="Add Background Check Record"
+        title={<span className="flex flex-wrap items-center gap-3"><span>Add Background Check Record</span><span className="rounded-[5px] bg-[#f7f8fb] px-2 py-1 text-[11px] font-medium text-[#4d5568]">Check date: {londonToday()}</span></span>}
         description="✓ means an issue exists; ✗ means clear / no issue."
         className="max-w-[900px]"
         bodyClassName="min-h-0 overflow-hidden"
@@ -1153,11 +1148,6 @@ function BackgroundCheckView({
         }
       >
         <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-          <div className="rounded-[8px] bg-[#f7f8fb] p-3 text-[13px]">
-            <span className="font-semibold text-[#000]">Check Date: </span>
-            <span className="font-mono text-[#000]">{londonToday()}</span>
-          </div>
-
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-[#9aa1b0]" />
             <input
@@ -1201,7 +1191,7 @@ function CheckTable<T extends Record<string, boolean | null>>({
 }) {
   return (
     <div className="min-h-0 min-w-0 flex-1 overflow-y-scroll rounded-[6px] border border-[#e2e5ec] text-[13px]" style={{ maxHeight: "min(520px, calc(90vh - 375px))" }}>
-      <div className="hidden grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">Include</span>{fields.map((field) => <span key={String(field.key)} className="text-center">{field.label}</span>)}</div>
+      <div className="sticky top-0 z-10 hidden grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">Include</span>{fields.map((field) => <span key={String(field.key)} className="text-center">{field.label}</span>)}</div>
       {members.map((member) => {
         const values = selected[member.id];
         return <div key={member.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] lg:items-center lg:gap-y-0">
