@@ -892,6 +892,7 @@ function LicenseCheckView({
         title="Add License Check Record"
         description="Verify and record officer license statuses."
         className="max-w-[900px]"
+        bodyClassName="min-h-0 overflow-hidden"
         footer={
           <>
             <SecondaryButton onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
@@ -902,7 +903,7 @@ function LicenseCheckView({
           </>
         }
       >
-        <div className="space-y-4 p-6">
+        <div className="flex h-full min-h-0 flex-col gap-4 p-6">
           <div className="rounded-[8px] bg-[#f7f8fb] p-3 text-[13px]">
             <span className="font-semibold text-[#000]">Check Date: </span>
             <span className="font-mono text-[#000]">{londonToday()}</span>
@@ -1140,6 +1141,7 @@ function BackgroundCheckView({
         title="Add Background Check Record"
         description="✓ means an issue exists; ✗ means clear / no issue."
         className="max-w-[900px]"
+        bodyClassName="min-h-0 overflow-hidden"
         footer={
           <>
             <SecondaryButton onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
@@ -1150,7 +1152,7 @@ function BackgroundCheckView({
           </>
         }
       >
-        <div className="space-y-4 p-6">
+        <div className="flex h-full min-h-0 flex-col gap-4 p-6">
           <div className="rounded-[8px] bg-[#f7f8fb] p-3 text-[13px]">
             <span className="font-semibold text-[#000]">Check Date: </span>
             <span className="font-mono text-[#000]">{londonToday()}</span>
@@ -1198,7 +1200,7 @@ function CheckTable<T extends Record<string, boolean | null>>({
   onSet: (id: string, field: keyof T, value: boolean) => void;
 }) {
   return (
-    <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-[6px] border border-[#e2e5ec] text-[13px]">
       <div className="hidden grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">Include</span>{fields.map((field) => <span key={String(field.key)} className="text-center">{field.label}</span>)}</div>
       {members.map((member) => {
         const values = selected[member.id];
