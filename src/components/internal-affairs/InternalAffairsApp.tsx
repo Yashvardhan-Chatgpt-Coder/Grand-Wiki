@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
 import {
   Archive,
@@ -23,9 +23,11 @@ import {
   Settings2,
   ShieldAlert,
   ShieldCheck,
+  Trash2,
   UserCog,
   UserPlus,
   Users,
+  Undo2,
   Video,
   X,
 } from "lucide-react";
@@ -149,6 +151,15 @@ function rankOrder(rank: string, ranks: string[]) {
   return index < 0 ? Number.MAX_SAFE_INTEGER : index;
 }
 
+function sortMembersByRank(members: IaMember[], ranks: string[]) {
+  return [...members].sort((a, b) => rankOrder(a.rank, ranks) - rankOrder(b.rank, ranks) || a.name.localeCompare(b.name));
+}
+
+function isRankFiveOrHigher(rank: string) {
+  const rankNumber = Number.parseInt(rank.match(/^\d+/)?.[0] || "", 10);
+  return Number.isNaN(rankNumber) || rankNumber >= 5;
+}
+
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[#4d5568]"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 rounded border-[#c8ced9] accent-black" />{label}</label>;
 }
@@ -264,6 +275,23 @@ function InternalAffairsApp({ user, onLogout }: { user: IaUser; onLogout: () => 
   };
   useEffect(() => { load(); }, [dailyDate]);
   const refresh = async () => { setLoading(true); await load(); };
+  const handleMemberSaved = (savedMember: IaMember, mode: "create" | "edit" | "rehire") => {
+    setMemberModal({ open: false, mode: "create" });
+    setMembers((current) => sortMembersByRank([...current.filter((member) => member.id !== savedMember.id), savedMember], settings?.ranks || []));
+    if (mode === "rehire") setArchives((current) => current.filter((member) => member.id !== savedMember.id));
+    if (mode === "edit") setSelectedMember((current) => current?.id === savedMember.id ? savedMember : current);
+    void iaApi.getDashboard().then(setDashboard).catch(() => {});
+    void iaApi.getAuditLogs().then(setAudits).catch(() => {});
+  };
+  const handleAuditUndo = async (auditId: string) => {
+    try {
+      const result = await iaApi.undoAudit(auditId);
+      notify({ title: "Change undone", description: result.message || "The selected audit change was undone.", variant: "success" });
+      await refresh();
+    } catch (error) {
+      notify({ title: "Could not undo change", description: error instanceof Error ? error.message : "Please try again.", variant: "error" });
+    }
+  };
 
   const nav: Array<{ id: Tab; label: string; icon: React.ReactNode; admin?: boolean }> = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -282,12 +310,12 @@ function InternalAffairsApp({ user, onLogout }: { user: IaUser; onLogout: () => 
   }, [location.search]);
   const label = nav.find((item) => item.id === tab)?.label || "Internal Affairs";
 
-  return <OrganizerLayout header={<SoftwareHeader title="Internal Affairs" />}><main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-6"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-[22px] font-semibold tracking-tight">{label}</h2></div>{tab === "members" ? <PrimaryButton onClick={() => setMemberModal({ open: true, mode: "create" })}><UserPlus className="h-4 w-4" />Add Member</PrimaryButton> : null}</div>{loading ? <div className="grid min-h-[320px] place-items-center"><Loader2 className="h-6 w-6 animate-spin text-[#666]" /></div> : <>{tab === "dashboard" && dashboard ? <DashboardView data={dashboard} audits={audits} onTabChange={setTab} /> : null}{tab === "members" ? <MembersView members={members} settings={settings} user={user} onOpen={(member) => setSelectedMember(member)} onEdit={(member) => setMemberModal({ open: true, mode: "edit", member })} onRefresh={refresh} /> : null}{tab === "archives" ? <ArchivesView members={archives} onRehire={(member) => setMemberModal({ open: true, mode: "rehire", member })} onRefresh={refresh} /> : null}{tab === "daily" ? <DailyLogCheckView members={members} user={user} audits={audits} onRefresh={refresh} /> : null}{tab === "licenses" ? <LicenseCheckView members={members} user={user} history={licenses} onRefresh={refresh} /> : null}{tab === "background" ? <BackgroundCheckView members={members} user={user} history={backgrounds} onRefresh={refresh} /> : null}{tab === "bodycam" ? <BodycamView members={members} user={user} requests={bodycamRequests} checks={bodycamChecks} onRefresh={refresh} /> : null}{tab === "audit" ? <AuditView audits={audits} /> : null}{tab === "admin" && user.isAdmin && settings ? <AdminView user={user} settings={settings} onRefresh={refresh} /> : null}</>}</main><MemberFormModal state={memberModal} settings={settings} onClose={() => setMemberModal((state) => ({ ...state, open: false }))} onSaved={async () => { setMemberModal({ open: false, mode: "create" }); await refresh(); }} /><MemberProfileModal member={selectedMember} user={user} settings={settings} onClose={() => setSelectedMember(null)} onEdit={() => selectedMember && setMemberModal({ open: true, mode: "edit", member: selectedMember })} onRefresh={refresh} /></OrganizerLayout>;
+  return <OrganizerLayout header={<SoftwareHeader title="Internal Affairs" />}><main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-6"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-[22px] font-semibold tracking-tight">{label}</h2></div>{tab === "members" ? <PrimaryButton onClick={() => setMemberModal({ open: true, mode: "create" })}><UserPlus className="h-4 w-4" />Add Member</PrimaryButton> : null}</div>{loading ? <div className="grid min-h-[320px] place-items-center"><Loader2 className="h-6 w-6 animate-spin text-[#666]" /></div> : <>{tab === "dashboard" && dashboard ? <DashboardView data={dashboard} audits={audits} user={user} onTabChange={setTab} onUndo={handleAuditUndo} /> : null}{tab === "members" ? <MembersView members={members} settings={settings} user={user} onOpen={(member) => setSelectedMember(member)} onEdit={(member) => setMemberModal({ open: true, mode: "edit", member })} onRefresh={refresh} /> : null}{tab === "archives" ? <ArchivesView members={archives} onRehire={(member) => setMemberModal({ open: true, mode: "rehire", member })} onRefresh={refresh} /> : null}{tab === "daily" ? <DailyLogCheckView members={members} user={user} audits={audits} onRefresh={refresh} /> : null}{tab === "licenses" ? <LicenseCheckView members={members} user={user} history={licenses} onRefresh={refresh} /> : null}{tab === "background" ? <BackgroundCheckView members={members} user={user} history={backgrounds} onRefresh={refresh} /> : null}{tab === "bodycam" ? <BodycamView members={members} user={user} requests={bodycamRequests} checks={bodycamChecks} onRefresh={refresh} /> : null}{tab === "audit" ? <AuditView audits={audits} user={user} onUndo={handleAuditUndo} /> : null}{tab === "admin" && user.isAdmin && settings ? <AdminView user={user} settings={settings} onRefresh={refresh} /> : null}</>}</main><MemberFormModal state={memberModal} settings={settings} onClose={() => setMemberModal((state) => ({ ...state, open: false }))} onSaved={handleMemberSaved} /><MemberProfileModal member={selectedMember} user={user} settings={settings} onClose={() => setSelectedMember(null)} onEdit={() => selectedMember && setMemberModal({ open: true, mode: "edit", member: selectedMember })} onRefresh={refresh} /></OrganizerLayout>;
 }
 
-function DashboardView({ data, audits, onTabChange }: { data: IaDashboard; audits: IaAuditLog[]; onTabChange: (tab: Tab) => void }) {
+function DashboardView({ data, audits, user, onTabChange, onUndo }: { data: IaDashboard; audits: IaAuditLog[]; user: IaUser; onTabChange: (tab: Tab) => void; onUndo: (auditId: string) => Promise<void> }) {
   const cards = [["Total Members", data.totalMembers], ["Members on LOA", data.membersOnLoa], ["Archived Members", data.archivedMembers], ["Missing Logs", data.missingLogs], ["Missing Hiring Logs", data.missingHiringLogs], ["Missing Roles", data.missingRoles], ["Daily Log Check", `${data.dailyLogProgress.checked} / ${data.dailyLogProgress.checked + data.dailyLogProgress.remaining}`], ["Pending Bodycam", `${data.pendingBodycam.provided} provided / ${data.pendingBodycam.notProvided} pending`]];
-  return <div className="space-y-5"><div className="overflow-x-auto border-y border-[#e2e5ec]"><div className="grid min-w-[1080px] grid-cols-[repeat(7,minmax(0,1fr))_minmax(260px,1.5fr)] divide-x divide-[#e2e5ec] py-3">{cards.map(([title, value]) => <div key={String(title)} className="min-w-0 px-3 first:pl-0 last:pr-0"><p className="truncate text-[10px] font-medium uppercase tracking-[0.08em] text-[#8a90a0]">{title}</p><p className="mt-1 whitespace-nowrap text-[17px] font-semibold tracking-tight text-[#000]">{value}</p></div>)}</div></div><Panel title="Quick Actions" description="Open a confirmed Internal Affairs workflow."><div className="flex flex-wrap gap-2">{([ ["Add Member", "members"], ["Daily Log Check", "daily"], ["License Check", "licenses"], ["Background Check", "background"], ["Bodycam Check", "bodycam"], ["Audit Logs", "audit"] ] as Array<[string, Tab]>).map(([title, destination]) => <SecondaryButton key={title} onClick={() => onTabChange(destination)}>{title}</SecondaryButton>)}</div></Panel><Panel title="Recent IA Activity" description="Latest material changes recorded by the system."><AuditRows audits={audits.slice(0, 10)} /></Panel></div>;
+  return <div className="space-y-5"><div className="overflow-x-auto border-y border-[#e2e5ec]"><div className="grid min-w-[1080px] grid-cols-[repeat(7,minmax(0,1fr))_minmax(260px,1.5fr)] divide-x divide-[#e2e5ec] py-3">{cards.map(([title, value]) => <div key={String(title)} className="min-w-0 px-3 first:pl-0 last:pr-0"><p className="truncate text-[10px] font-medium uppercase tracking-[0.08em] text-[#8a90a0]">{title}</p><p className="mt-1 whitespace-nowrap text-[17px] font-semibold tracking-tight text-[#000]">{value}</p></div>)}</div></div><Panel title="Quick Actions" description="Open a confirmed Internal Affairs workflow."><div className="flex flex-wrap gap-2">{([ ["Add Member", "members"], ["Daily Log Check", "daily"], ["License Check", "licenses"], ["Background Check", "background"], ["Bodycam Check", "bodycam"], ["Audit Logs", "audit"] ] as Array<[string, Tab]>).map(([title, destination]) => <SecondaryButton key={title} onClick={() => onTabChange(destination)}>{title}</SecondaryButton>)}</div></Panel><Panel title="Recent IA Activity" description="Latest material changes recorded by the system."><AuditRows audits={audits.slice(0, 10)} isAdmin={user.isAdmin} onUndo={onUndo} /></Panel></div>;
 }
 
 function LegacyMembersView({ members, settings, user, onOpen, onEdit, onRefresh }: { members: IaMember[]; settings: IaSettings | null; user: IaUser; onOpen: (member: IaMember) => void; onEdit: (member: IaMember) => void; onRefresh: () => Promise<void> }) {
@@ -302,13 +330,15 @@ function LegacyMembersView({ members, settings, user, onOpen, onEdit, onRefresh 
 
 function UtilityPanel({ title, members, template }: { title: string; members: IaMember[]; user: IaUser; template: (members: IaMember[]) => string }) { return <Panel title={`${title} (${members.length})`}><div className="space-y-2">{members.slice(0, 5).map((member) => <p key={member.id} className="text-[12px] text-[#4d5568]">{member.name} <span className="text-[#9aa1b0]">— {member.passportNumber}</span></p>)}{!members.length ? <p className="text-[12px] text-[#8a90a0]">Nothing requires attention.</p> : null}{template(members) ? <SecondaryButton onClick={() => copyMessage(template(members), `${title} notice`)}><Copy className="h-3.5 w-3.5" />Copy notice</SecondaryButton> : null}</div></Panel>; }
 
-function UtilityPopup({ kind, open, members, user, onClose }: { kind: "logs" | "hiring" | "roles"; open: boolean; members: IaMember[]; user: IaUser; onClose: () => void }) {
-  const title = kind === "logs" ? "Missing Logs" : kind === "hiring" ? "Missing Hiring Logs" : "Missing Roles";
+function UtilityPopup({ kind, open, members, user, onClose }: { kind: "logs" | "hiring" | "roles" | "department"; open: boolean; members: IaMember[]; user: IaUser; onClose: () => void }) {
+  const title = kind === "logs" ? "Missing Logs" : kind === "hiring" ? "Missing Hiring Logs" : kind === "roles" ? "Missing Roles" : "No Department";
   const template = kind === "logs"
     ? (list: IaMember[]) => `# LOG REQUEST NOTICE\n\nThe following members currently do not have their required logs assigned.\n\n**Members Required to Request Logs:**\n${list.map((member) => `${member.name} — ${discordMention(member)}`).join("\n")}\n\nAll listed members are given **24 hours** to submit a request for their required logs.\n\nFailure to request the required logs within the given timeframe may result in further action.\n\n${footer(user)}`
     : kind === "roles"
       ? (list: IaMember[]) => `# ROLE REQUEST NOTICE\n\nThe following members are currently part of the organisation but do not have the required organisation roles.\n\n**Members Required to Request Roles:**\n${list.map((member) => `${member.name} — ${discordMention(member)}`).join("\n")}\n\nAll listed members are given **24 hours** to submit a role request.\n\nFailure to request the required roles within the given timeframe may result in further action.\n\n${footer(user)}`
-      : () => "";
+      : kind === "department"
+        ? (list: IaMember[]) => `# DEPARTMENT ASSIGNMENT NOTICE\n\nThe following members are currently part of the organisation but do not have a primary or secondary department assigned.\n\n**Members Required to Select a Department:**\n${list.map((member) => `${member.name} — ${discordMention(member)}`).join("\n")}\n\nAll listed members are required to select a department within **24 hours**.\n\nFailure to select a department within the given timeframe may result in further action.\n\n${footer(user)}`
+        : () => "";
   const message = template(members);
   return <AppPopupWindow open={open} onOpenChange={(value) => !value && onClose()} title={`${title} (${members.length})`} description="Review the complete list of members requiring attention." footer={<><SecondaryButton onClick={onClose}>Close</SecondaryButton>{message ? <PrimaryButton onClick={() => copyMessage(message, `${title} notice`)}><Copy className="h-3.5 w-3.5" />Copy notice</PrimaryButton> : null}</>}><div className="max-h-[55vh] overflow-y-auto p-6">{members.length ? <div className="divide-y divide-[#f0f1f3]">{members.map((member) => <div key={member.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"><div><p className="text-[13px] font-medium">{member.name}</p><p className="text-[11px] text-[#8a90a0]">Passport {member.passportNumber}</p></div><span className="text-[12px] text-[#666]">{member.rank}</span></div>)}</div> : <p className="text-[13px] text-[#8a90a0]">Nothing requires attention.</p>}</div></AppPopupWindow>;
 }
@@ -366,49 +396,20 @@ function ArchivesView({
       </div>
 
       <Panel title={`Archives (${members.length})`} description="Former members available for rehire.">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-[13px]">
-            <thead>
-              <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-                <th className="px-3 py-2.5">Name</th>
-                <th className="px-3 py-2.5">Left Date</th>
-                <th className="px-3 py-2.5">Reason</th>
-                <th className="px-3 py-2.5 text-right">Rehire</th>
-                <th className="px-3 py-2.5 text-right">Roles Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member) => (
-                <tr key={member.id} className="border-b border-[#f0f1f3]">
-                  <td className="px-3 py-3 font-medium">
-                    {member.name}
-                    <span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span>
-                  </td>
-                  <td className="px-3 py-3 text-[#4d5568]">{member.leftDate || "-"}</td>
-                  <td className="max-w-[280px] px-3 py-3 text-[#4d5568]">{member.leftReason || "-"}</td>
-                  <td className="px-3 py-3 text-right">
-                    <SecondaryButton onClick={() => onRehire(member)}>
-                      <UserPlus className="h-3.5 w-3.5" />Rehire
-                    </SecondaryButton>
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    {member.rolesRemoved || !member.discordRoles ? (
-                      <span className="rounded-[4px] bg-[#f0f1f3] px-2 py-0.5 text-[11px] font-medium text-[#8a90a0]">Removed</span>
-                    ) : (
-                      <span className="rounded-[4px] bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">Pending Removal</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {!members.length ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-10 text-center text-[#8a90a0]">
-                    No archived members.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+          <div className="hidden grid-cols-[minmax(0,1.35fr)_140px_minmax(0,1.5fr)_100px_150px] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid">
+            <span>Name</span><span>Left Date</span><span>Reason</span><span className="text-center">Rehire</span><span className="text-center">Roles Status</span>
+          </div>
+          {members.map((member) => (
+            <div key={member.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_140px_minmax(0,1.5fr)_100px_150px] lg:items-center lg:gap-y-0">
+              <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><p className="font-medium">{member.name}<span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span></p></div>
+              <div className="min-w-0"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Left Date</span><p className="text-[#4d5568]">{member.leftDate || "-"}</p></div>
+              <div className="min-w-0 lg:truncate"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Reason</span><p className="text-[#4d5568]">{member.leftReason || "-"}</p></div>
+              <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Rehire</span><SecondaryButton onClick={() => onRehire(member)}><UserPlus className="h-3.5 w-3.5" />Rehire</SecondaryButton></div>
+              <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Roles Status</span>{member.rolesRemoved || !member.discordRoles ? <span className="rounded-[4px] bg-[#f0f1f3] px-2 py-0.5 text-[11px] font-medium text-[#8a90a0]">Removed</span> : <span className="rounded-[4px] bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">Pending Removal</span>}</div>
+            </div>
+          ))}
+          {!members.length ? <div className="px-3 py-10 text-center text-[#8a90a0]">No archived members.</div> : null}
         </div>
       </Panel>
 
@@ -612,58 +613,18 @@ function DailyLogCheckView({
             </SecondaryButton>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[580px] text-left text-[13px]">
-              <thead>
-                <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-                  <th className="px-3 py-2.5">Member</th>
-                  <th className="px-3 py-2.5">LOA Status</th>
-                  <th className="px-3 py-2.5 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => {
-                  const isChecked = checkedSetForSelected.has(m.id);
-                  const onLoa = (m.activeLoas || []).length > 0;
-                  return (
-                    <tr key={m.id} className="border-b border-[#f0f1f3]">
-                      <td className="px-3 py-3 font-medium">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            title={`Copy ${m.name}`}
-                            onClick={() => copyMessage(m.name, "Officer name")}
-                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </button>
-                          <div>
-                            <span className="block text-[13px] font-medium text-[#000]">{m.name}</span>
-                            <span className="block text-[11px] font-normal text-[#8a90a0]">{m.passportNumber}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        {onLoa ? (
-                          <span className="rounded-[4px] bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
-                            On LOA until {m.activeLoas[0].endDate}
-                          </span>
-                        ) : (
-                          <span className="text-[12px] text-[#8a90a0]">-</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {isChecked ? (
-                          <span className="inline-flex items-center gap-1 rounded-[4px] bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">✓ Checked</span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-[4px] bg-zinc-100 px-2 py-0.5 text-[11px] text-[#8a90a0]">✗ Not Checked</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+            <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_150px] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span>LOA Status</span><span className="text-center">Status</span></div>
+            {members.map((m) => {
+              const isChecked = checkedSetForSelected.has(m.id);
+              const onLoa = (m.activeLoas || []).length > 0;
+              return <div key={m.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_150px] lg:items-center lg:gap-y-0">
+                <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><div className="flex items-center gap-2"><button type="button" title={`Copy ${m.name}`} onClick={() => copyMessage(m.name, "Officer name")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"><Copy className="h-3 w-3" /></button><div><span className="block text-[13px] font-medium text-[#000]">{m.name}</span><span className="block text-[11px] font-normal text-[#8a90a0]">{m.passportNumber}</span></div></div></div>
+                <div className="min-w-0"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">LOA Status</span>{onLoa ? <span className="rounded-[4px] bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">On LOA until {m.activeLoas[0].endDate}</span> : <span className="text-[12px] text-[#8a90a0]">-</span>}</div>
+                <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Status</span>{isChecked ? <span className="inline-flex items-center gap-1 rounded-[4px] bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">✓ Checked</span> : <span className="inline-flex items-center gap-1 rounded-[4px] bg-zinc-100 px-2 py-0.5 text-[11px] text-[#8a90a0]">✗ Not Checked</span>}</div>
+              </div>;
+            })}
+            {!members.length ? <div className="px-3 py-10 text-center text-[#8a90a0]">No members to show.</div> : null}
           </div>
         </div>
       </div>
@@ -706,49 +667,20 @@ function DailyLogCheckView({
             />
           </div>
 
-          <div className="max-h-[380px] overflow-y-auto">
-            <table className="w-full min-w-[550px] text-left text-[13px]">
-              <thead>
-                <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-                  <th className="px-3 py-2.5">Member</th>
-                  <th className="px-3 py-2.5">Rank</th>
-                  <th className="px-3 py-2.5">LOA</th>
-                  <th className="px-3 py-2.5 text-center">Copy Notice</th>
-                  <th className="px-3 py-2.5 text-center">Mark Checked</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleModalMembers.map((m) => {
-                  const checked = modalCheckedIds.has(m.id);
-                  const onLoa = (m.activeLoas || []).length > 0;
-                  return (
-                    <tr key={m.id} className="border-b border-[#f0f1f3]">
-                      <td className="px-3 py-3 font-medium">
-                        {m.name}
-                        <span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{m.passportNumber}</span>
-                      </td>
-                      <td className="px-3 py-3 text-[#4d5568]">{m.rank}</td>
-                      <td className="px-3 py-3">
-                        {onLoa ? <span className="rounded-[4px] bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">LOA Active</span> : "-"}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <SecondaryButton onClick={() => copyMessage(activityTemplate(m, user), "Activity check notice")}>
-                          <Copy className="h-3.5 w-3.5" />Copy Notice
-                        </SecondaryButton>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleModalMember(m.id)}
-                          className="h-4 w-4 rounded border-[#c8ced9] accent-black"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="max-h-[380px] overflow-y-auto rounded-[6px] border border-[#e2e5ec]">
+            <div className="hidden grid-cols-[minmax(0,1.35fr)_110px_100px_140px_100px] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span>Rank</span><span>LOA</span><span className="text-center">Copy Notice</span><span className="text-center">Mark Checked</span></div>
+            {visibleModalMembers.map((m) => {
+              const checked = modalCheckedIds.has(m.id);
+              const onLoa = (m.activeLoas || []).length > 0;
+              return <div key={m.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_110px_100px_140px_100px] lg:items-center lg:gap-y-0">
+                <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><p className="font-medium">{m.name}<span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{m.passportNumber}</span></p></div>
+                <div><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Rank</span><p className="text-[#4d5568]">{m.rank}</p></div>
+                <div><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">LOA</span>{onLoa ? <span className="rounded-[4px] bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">LOA Active</span> : <span className="text-[#8a90a0]">-</span>}</div>
+                <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Notice</span><SecondaryButton onClick={() => copyMessage(activityTemplate(m, user), "Activity check notice")}><Copy className="h-3.5 w-3.5" />Copy Notice</SecondaryButton></div>
+                <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Mark Checked</span><input aria-label={`Mark ${m.name} checked`} type="checkbox" checked={checked} onChange={() => toggleModalMember(m.id)} className="h-4 w-4 rounded border-[#c8ced9] accent-black" /></div>
+              </div>;
+            })}
+            {!visibleModalMembers.length ? <div className="px-3 py-10 text-center text-[13px] text-[#8a90a0]">No members match your search.</div> : null}
           </div>
         </div>
       </AppPopupWindow>
@@ -934,52 +866,20 @@ function LicenseCheckView({
           </div>
 
           {activeBatch ? (
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[580px] text-left text-[13px]">
-                  <thead>
-                    <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-                      <th className="px-3 py-2.5">Member</th>
-                      <th className="px-3 py-2.5 text-center">DL</th>
-                      <th className="px-3 py-2.5 text-center">WL</th>
-                      <th className="px-3 py-2.5 text-center">HI</th>
-                      <th className="px-3 py-2.5 text-center">LL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeBatch.items.map((item) => {
-                      const m = members.find((mem) => mem.id === item.memberId);
-                      return (
-                        <tr key={item.id} className="border-b border-[#f0f1f3]">
-                          <td className="px-3 py-3 font-medium">
-                            <div className="flex items-center gap-2">
-                              {m?.name ? (
-                                <button
-                                  type="button"
-                                  title={`Copy ${m.name}`}
-                                  onClick={() => copyMessage(m.name, "Officer name")}
-                                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </button>
-                              ) : null}
-                              <div>
-                                <span className="block text-[13px] font-medium text-[#000]">{m?.name || "Former member"}</span>
-                                <span className="block text-[11px] font-normal text-[#8a90a0]">{m?.passportNumber || "-"}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-center">{mark(item.driverLicense)}</td>
-                          <td className="px-3 py-3 text-center">{mark(item.weaponsLicense)}</td>
-                          <td className="px-3 py-3 text-center">{mark(item.healthInsurance)}</td>
-                          <td className="px-3 py-3 text-center">
-                            {item.lawyerLicense === null ? <span className="text-[#9aa1b0]">N/A</span> : mark(item.lawyerLicense)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+              <div className="hidden grid-cols-[minmax(0,1.4fr)_repeat(4,70px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">DL</span><span className="text-center">WL</span><span className="text-center">HI</span><span className="text-center">LL</span></div>
+              {activeBatch.items.map((item) => {
+                const m = members.find((mem) => mem.id === item.memberId);
+                return <div key={item.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,70px)] lg:items-center lg:gap-y-0">
+                  <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><div className="flex items-center gap-2">{m?.name ? <button type="button" title={`Copy ${m.name}`} onClick={() => copyMessage(m.name, "Officer name")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"><Copy className="h-3 w-3" /></button> : null}<div><span className="block text-[13px] font-medium text-[#000]">{m?.name || "Former member"}</span><span className="block text-[11px] font-normal text-[#8a90a0]">{m?.passportNumber || "-"}</span></div></div></div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">DL</span>{mark(item.driverLicense)}</div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">WL</span>{mark(item.weaponsLicense)}</div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">HI</span>{mark(item.healthInsurance)}</div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">LL</span>{item.lawyerLicense === null ? <span className="text-[#9aa1b0]">N/A</span> : mark(item.lawyerLicense)}</div>
+                </div>;
+              })}
+              {!activeBatch.items.length ? <div className="px-3 py-10 text-center text-[#8a90a0]">No license checks in this record.</div> : null}
+            </div>
           ) : (
             <p className="py-8 text-center text-[13px] text-[#8a90a0]">Select a past check record from the left list.</p>
           )}
@@ -1214,50 +1114,20 @@ function BackgroundCheckView({
           </div>
 
           {activeBatch ? (
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[580px] text-left text-[13px]">
-                  <thead>
-                    <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-                      <th className="px-3 py-2.5">Member</th>
-                      <th className="px-3 py-2.5 text-center">Wanted</th>
-                      <th className="px-3 py-2.5 text-center">Prison Terms</th>
-                      <th className="px-3 py-2.5 text-center">Previous Crimes</th>
-                      <th className="px-3 py-2.5 text-center">Criminal Structures</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeBatch.items.map((item) => {
-                      const m = members.find((mem) => mem.id === item.memberId);
-                      return (
-                        <tr key={item.id} className="border-b border-[#f0f1f3]">
-                          <td className="px-3 py-3 font-medium">
-                            <div className="flex items-center gap-2">
-                              {m?.name ? (
-                                <button
-                                  type="button"
-                                  title={`Copy ${m.name}`}
-                                  onClick={() => copyMessage(m.name, "Officer name")}
-                                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </button>
-                              ) : null}
-                              <div>
-                                <span className="block text-[13px] font-medium text-[#000]">{m?.name || "Former member"}</span>
-                                <span className="block text-[11px] font-normal text-[#8a90a0]">{m?.passportNumber || "-"}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-center">{mark(item.wanted)}</td>
-                          <td className="px-3 py-3 text-center">{mark(item.prisonTerms)}</td>
-                          <td className="px-3 py-3 text-center">{mark(item.previousCrimes)}</td>
-                          <td className="px-3 py-3 text-center">{mark(item.criminalStructures)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+              <div className="hidden grid-cols-[minmax(0,1.4fr)_repeat(4,110px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">Wanted</span><span className="text-center">Prison Terms</span><span className="text-center">Previous Crimes</span><span className="text-center">Criminal Structures</span></div>
+              {activeBatch.items.map((item) => {
+                const m = members.find((mem) => mem.id === item.memberId);
+                return <div key={item.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,110px)] lg:items-center lg:gap-y-0">
+                  <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><div className="flex items-center gap-2">{m?.name ? <button type="button" title={`Copy ${m.name}`} onClick={() => copyMessage(m.name, "Officer name")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"><Copy className="h-3 w-3" /></button> : null}<div><span className="block text-[13px] font-medium text-[#000]">{m?.name || "Former member"}</span><span className="block text-[11px] font-normal text-[#8a90a0]">{m?.passportNumber || "-"}</span></div></div></div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Wanted</span>{mark(item.wanted)}</div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Prison Terms</span>{mark(item.prisonTerms)}</div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Previous Crimes</span>{mark(item.previousCrimes)}</div>
+                  <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Criminal Structures</span>{mark(item.criminalStructures)}</div>
+                </div>;
+              })}
+              {!activeBatch.items.length ? <div className="px-3 py-10 text-center text-[#8a90a0]">No background checks in this record.</div> : null}
+            </div>
           ) : (
             <p className="py-8 text-center text-[13px] text-[#8a90a0]">Select a past check record from the left list.</p>
           )}
@@ -1328,74 +1198,21 @@ function CheckTable<T extends Record<string, boolean | null>>({
   onSet: (id: string, field: keyof T, value: boolean) => void;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[750px] text-left text-[13px]">
-        <thead>
-          <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-            <th className="px-3 py-2.5">Member</th>
-            <th className="px-3 py-2.5 text-center">Include</th>
-            {fields.map((field) => (
-              <th key={String(field.key)} className="px-3 py-2.5 text-center">
-                {field.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((member) => {
-            const values = selected[member.id];
-            return (
-              <tr key={member.id} className="border-b border-[#f0f1f3]">
-                <td className="px-3 py-3 font-medium">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      title={`Copy ${member.name}`}
-                      onClick={() => copyMessage(member.name, "Officer name")}
-                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </button>
-                    <div>
-                      <span className="block text-[13px] font-medium text-[#000]">{member.name}</span>
-                      <span className="block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-3 py-3 text-center">
-                  <input
-                    aria-label={`Include ${member.name}`}
-                    type="checkbox"
-                    checked={Boolean(values)}
-                    onChange={() => onToggleSelected(member)}
-                    className="h-4 w-4 rounded border-[#c8ced9] accent-black"
-                  />
-                </td>
-                {fields.map((field) => {
-                  const disabled = !values || (field.onlyDistrictAttorney && member.rank !== "District Attorney");
-                  const value = values?.[field.key];
-                  return (
-                    <td key={String(field.key)} className="px-3 py-3 text-center">
-                      {field.onlyDistrictAttorney && member.rank !== "District Attorney" ? (
-                        <span className="text-[11px] text-[#9aa1b0]">N/A</span>
-                      ) : (
-                        <input
-                          aria-label={`${field.label} for ${member.name}`}
-                          disabled={disabled}
-                          type="checkbox"
-                          checked={Boolean(value)}
-                          onChange={(event) => onSet(member.id, field.key, event.target.checked)}
-                          className="h-4 w-4 rounded border-[#c8ced9] accent-black disabled:opacity-40"
-                        />
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
+    <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+      <div className="hidden grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">Include</span>{fields.map((field) => <span key={String(field.key)} className="text-center">{field.label}</span>)}</div>
+      {members.map((member) => {
+        const values = selected[member.id];
+        return <div key={member.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] lg:items-center lg:gap-y-0">
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><div className="flex items-center gap-2"><button type="button" title={`Copy ${member.name}`} onClick={() => copyMessage(member.name, "Officer name")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"><Copy className="h-3 w-3" /></button><div><span className="block text-[13px] font-medium text-[#000]">{member.name}</span><span className="block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span></div></div></div>
+          <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Include</span><input aria-label={`Include ${member.name}`} type="checkbox" checked={Boolean(values)} onChange={() => onToggleSelected(member)} className="h-4 w-4 rounded border-[#c8ced9] accent-black" /></div>
+          {fields.map((field) => {
+            const disabled = !values || (field.onlyDistrictAttorney && member.rank !== "District Attorney");
+            const value = values?.[field.key];
+            return <div key={String(field.key)} className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">{field.label}</span>{field.onlyDistrictAttorney && member.rank !== "District Attorney" ? <span className="text-[11px] text-[#9aa1b0]">N/A</span> : <input aria-label={`${field.label} for ${member.name}`} disabled={disabled} type="checkbox" checked={Boolean(value)} onChange={(event) => onSet(member.id, field.key, event.target.checked)} className="h-4 w-4 rounded border-[#c8ced9] accent-black disabled:opacity-40" />}</div>;
           })}
-        </tbody>
-      </table>
+        </div>;
+      })}
+      {!members.length ? <div className="px-3 py-10 text-center text-[13px] text-[#8a90a0]">No members match your search.</div> : null}
     </div>
   );
 }
@@ -1577,34 +1394,15 @@ function BodycamView({
           </div>
 
           {activeCheck ? (
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[500px] text-left text-[13px]">
-                  <thead>
-                    <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-                      <th className="px-3 py-2.5">Officer Name</th>
-                      <th className="px-3 py-2.5">Rank</th>
-                      <th className="px-3 py-2.5 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeReportMembers.map((m) => (
-                      <tr key={m.id} className="border-b border-[#f0f1f3]">
-                        <td className="px-3 py-3 font-medium">
-                          {m.name}
-                          <span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{m.passportNumber}</span>
-                        </td>
-                        <td className="px-3 py-3 text-[#4d5568]">{m.rank}</td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="inline-flex items-center gap-1 rounded-[4px] bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">✓ Checked</span>
-                        </td>
-                      </tr>
-                    ))}
-                    {!activeReportMembers.length ? (
-                      <tr><td colSpan={3} className="px-3 py-6 text-center text-[#8a90a0]">No officer details stored for this check.</td></tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
+            <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+              <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_150px] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Officer Name</span><span>Rank</span><span className="text-center">Status</span></div>
+              {activeReportMembers.map((m) => <div key={m.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_150px] lg:items-center lg:gap-y-0">
+                <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Officer Name</span><p className="font-medium">{m.name}<span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{m.passportNumber}</span></p></div>
+                <div><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Rank</span><p className="text-[#4d5568]">{m.rank}</p></div>
+                <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Status</span><span className="inline-flex items-center gap-1 rounded-[4px] bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">✓ Checked</span></div>
+              </div>)}
+              {!activeReportMembers.length ? <div className="px-3 py-6 text-center text-[#8a90a0]">No officer details stored for this check.</div> : null}
+            </div>
           ) : (
             <p className="py-8 text-center text-[13px] text-[#8a90a0]">Select a past check record from the left list.</p>
           )}
@@ -1711,76 +1509,42 @@ function MemberPickTable({
   onRequestCopy?: (member: IaMember) => void;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[500px] text-left text-[13px]">
-        <thead>
-          <tr className="border-y border-[#e2e5ec] bg-[#f7f8fb] text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0]">
-            <th className="px-3 py-2.5">Member</th>
-            <th className="px-3 py-2.5">Rank</th>
-            <th className="px-3 py-2.5 text-right">Include</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((member) => (
-            <tr key={member.id} className="border-b border-[#f0f1f3]">
-              <td className="px-3 py-3 font-medium">
-                <div className="flex items-center gap-2">
-                  {onRequestCopy ? (
-                    <SecondaryButton
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRequestCopy(member);
-                      }}
-                      className="h-7 shrink-0 gap-1 px-2 text-[11px]"
-                    >
-                      <Copy className="h-3 w-3" /> Copy Notice
-                    </SecondaryButton>
-                  ) : (
-                    <button
-                      type="button"
-                      title={`Copy ${member.name}`}
-                      onClick={() => copyMessage(member.name, "Officer name")}
-                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </button>
-                  )}
-                  <div>
-                    <span className="block text-[13px] font-medium text-[#000]">{member.name}</span>
-                    <span className="block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span>
-                  </div>
-                </div>
-              </td>
-              <td className="px-3 py-3 text-[#4d5568]">{member.rank}</td>
-              <td className="px-3 py-3 text-right">
-                <input
-                  aria-label={`Select ${member.name}`}
-                  type="checkbox"
-                  checked={selectedIds.has(member.id)}
-                  onChange={() => onToggle(member.id)}
-                  className="h-4 w-4 cursor-pointer rounded border-[#c8ced9] accent-black"
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
+      <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_100px] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span>Rank</span><span className="text-center">Include</span></div>
+      {members.map((member) => <div key={member.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_100px] lg:items-center lg:gap-y-0">
+        <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><div className="flex items-center gap-2">{onRequestCopy ? <SecondaryButton type="button" onClick={(e) => { e.stopPropagation(); onRequestCopy(member); }} className="h-7 shrink-0 gap-1 px-2 text-[11px]"><Copy className="h-3 w-3" />Copy Notice</SecondaryButton> : <button type="button" title={`Copy ${member.name}`} onClick={() => copyMessage(member.name, "Officer name")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[4px] border border-[#e2e5ec] bg-white text-[#666] transition-colors hover:border-[#000] hover:bg-[#f7f8fb] hover:text-[#000]"><Copy className="h-3 w-3" /></button>}<div><span className="block text-[13px] font-medium text-[#000]">{member.name}</span><span className="block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span></div></div></div>
+        <div><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Rank</span><p className="text-[#4d5568]">{member.rank}</p></div>
+        <div className="flex items-center justify-start lg:justify-center"><span className="mr-2 text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Include</span><input aria-label={`Select ${member.name}`} type="checkbox" checked={selectedIds.has(member.id)} onChange={() => onToggle(member.id)} className="h-4 w-4 cursor-pointer rounded border-[#c8ced9] accent-black" /></div>
+      </div>)}
+      {!members.length ? <div className="px-3 py-10 text-center text-[13px] text-[#8a90a0]">No members match your search.</div> : null}
     </div>
   );
 }
 
-function AuditView({ audits }: { audits: IaAuditLog[] }) { return <Panel title="Audit Logs" description="Every material database change is recorded with the responsible Internal Affairs user and timestamp."><AuditRows audits={audits} /></Panel>; }
+function AuditView({ audits, user, onUndo }: { audits: IaAuditLog[]; user: IaUser; onUndo: (auditId: string) => Promise<void> }) { return <Panel title="Audit Logs" description="Every material database change is recorded with the responsible Internal Affairs user and timestamp."><AuditRows audits={audits} isAdmin={user.isAdmin} onUndo={onUndo} /></Panel>; }
 
-function AuditRows({ audits }: { audits: IaAuditLog[] }) { return <div className="divide-y divide-[#f0f1f3]">{audits.map((audit) => <div key={audit.id} className="flex flex-col justify-between gap-1 py-3 sm:flex-row sm:items-start sm:gap-5"><div><p className="text-[13px] font-medium">{audit.action.replace(/_/g, " ")}</p><p className="mt-0.5 text-[12px] text-[#666]">{audit.details || audit.entityName}</p><p className="mt-1 text-[11px] text-[#8a90a0]">Performed by {audit.actorName}{audit.actorEmail ? ` · ${audit.actorEmail}` : ""}{audit.actorRank ? ` · ${audit.actorRank}` : ""}</p></div><time className="shrink-0 text-[11px] text-[#8a90a0]">{formatUkDate(audit.createdAt)}</time></div>)}{!audits.length ? <p className="py-8 text-center text-[13px] text-[#8a90a0]">No audit events yet.</p> : null}</div>; }
+function AuditRows({ audits, isAdmin, onUndo }: { audits: IaAuditLog[]; isAdmin: boolean; onUndo: (auditId: string) => Promise<void> }) { return <div className="divide-y divide-[#f0f1f3]">{audits.map((audit) => <div key={audit.id} className="flex flex-col justify-between gap-3 py-3 sm:flex-row sm:items-start sm:gap-5"><div><p className="text-[13px] font-medium">{audit.action.replace(/_/g, " ")}</p><p className="mt-0.5 text-[12px] text-[#666]">{audit.details || audit.entityName}</p><p className="mt-1 text-[11px] text-[#8a90a0]">Performed by {audit.actorName}{audit.actorEmail ? ` · ${audit.actorEmail}` : ""}{audit.actorRank ? ` · ${audit.actorRank}` : ""}</p></div><div className="flex shrink-0 items-center gap-3"><time className="text-[11px] text-[#8a90a0]">{formatUkDate(audit.createdAt)}</time>{isAdmin ? <SecondaryButton onClick={() => void onUndo(audit.id)}><Undo2 className="h-3.5 w-3.5" />Undo</SecondaryButton> : null}</div></div>)}{!audits.length ? <p className="py-8 text-center text-[13px] text-[#8a90a0]">No audit events yet.</p> : null}</div>; }
 
 function AdminView({ user, settings, onRefresh }: { user: IaUser; settings: IaSettings; onRefresh: () => Promise<void> }) {
-  const [users, setUsers] = useState<IaUser[]>([]); const [open, setOpen] = useState(false); const [department, setDepartment] = useState(""); const [rank, setRank] = useState(""); const [saving, setSaving] = useState(false);
+  const [users, setUsers] = useState<IaUser[]>([]); const [open, setOpen] = useState(false); const [deleteTarget, setDeleteTarget] = useState<IaUser | null>(null); const [department, setDepartment] = useState(""); const [rank, setRank] = useState(""); const [saving, setSaving] = useState(false);
   useEffect(() => { iaApi.getUsers().then(setUsers).catch((error) => notify({ title: "Could not load accounts", description: error instanceof Error ? error.message : "Please try again.", variant: "error" })); }, []);
   const updateSettings = async (next: Pick<IaSettings, "departments" | "ranks">) => { setSaving(true); try { await iaApi.updateSettings(next); notify({ title: "Organisation settings saved", variant: "success" }); await onRefresh(); } catch (error) { notify({ title: "Could not save settings", description: error instanceof Error ? error.message : "Please try again.", variant: "error" }); } finally { setSaving(false); } };
   const add = (type: "departments" | "ranks") => { const value = (type === "departments" ? department : rank).trim(); if (!value) return; const current = settings[type]; if (current.includes(value)) return notify({ title: "Already listed", variant: "warning" }); void updateSettings({ departments: type === "departments" ? [...settings.departments, value] : settings.departments, ranks: type === "ranks" ? [...settings.ranks, value] : settings.ranks }); type === "departments" ? setDepartment("") : setRank(""); };
   const remove = (type: "departments" | "ranks", value: string) => void updateSettings({ departments: type === "departments" ? settings.departments.filter((item) => item !== value) : settings.departments, ranks: type === "ranks" ? settings.ranks.filter((item) => item !== value) : settings.ranks });
-  return <div className="space-y-5"><Panel title="Software Users" description="Only administrators can create and view Internal Affairs software accounts." action={<PrimaryButton onClick={() => setOpen(true)}><UserPlus className="h-4 w-4" />Create User</PrimaryButton>}><div className="divide-y divide-[#f0f1f3]">{users.map((account) => <div key={account.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-[13px] font-medium">{account.name}{account.isAdmin ? <span className="ml-2 rounded-[4px] bg-[#f0f1f3] px-1.5 py-0.5 text-[10px] uppercase text-[#666]">Admin</span> : null}</p><p className="text-[12px] text-[#666]">{account.email} · {account.organisation}</p></div><span className="text-[12px] text-[#8a90a0]">{account.rank}</span></div>)}{!users.length ? <p className="py-5 text-[12px] text-[#8a90a0]">No accounts to show.</p> : null}</div></Panel><div className="grid gap-5 xl:grid-cols-2"><Panel title="Departments" description="These options are used in the Add and Manage Member popups."><div className="flex gap-2"><input className={inputClass} value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="New department" /><PrimaryButton disabled={saving} onClick={() => add("departments")}><Plus className="h-3.5 w-3.5" />Add</PrimaryButton></div><OptionList values={settings.departments} onRemove={(value) => remove("departments", value)} /></Panel><Panel title="Ranks" description="Every configured rank is available in the member rank dropdown."><div className="flex gap-2"><input className={inputClass} value={rank} onChange={(event) => setRank(event.target.value)} placeholder="New rank" /><PrimaryButton disabled={saving} onClick={() => add("ranks")}><Plus className="h-3.5 w-3.5" />Add</PrimaryButton></div><OptionList values={settings.ranks} onRemove={(value) => remove("ranks", value)} /></Panel></div><CreateUserModal open={open} user={user} settings={settings} onClose={() => setOpen(false)} onCreated={(account) => { setUsers((current) => [...current, account].sort((a, b) => a.name.localeCompare(b.name))); setOpen(false); }} /></div>;
+  const deleteAccount = async () => {
+    if (!deleteTarget) return;
+    setSaving(true);
+    try {
+      await iaApi.deleteUser(deleteTarget.id);
+      notify({ title: "Account deleted", description: `${deleteTarget.name}'s software account was deleted.`, variant: "success" });
+      setUsers((current) => current.filter((account) => account.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      await onRefresh();
+    } catch (error) {
+      notify({ title: "Could not delete account", description: error instanceof Error ? error.message : "Please try again.", variant: "error" });
+    } finally { setSaving(false); }
+  };
+  return <div className="space-y-5"><Panel title="Software Users" description="Only administrators can create and view Internal Affairs software accounts." action={<PrimaryButton onClick={() => setOpen(true)}><UserPlus className="h-4 w-4" />Create User</PrimaryButton>}><div className="divide-y divide-[#f0f1f3]">{users.map((account) => <div key={account.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-[13px] font-medium">{account.name}{account.isAdmin ? <span className="ml-2 rounded-[4px] bg-[#f0f1f3] px-1.5 py-0.5 text-[10px] uppercase text-[#666]">Admin</span> : null}</p><p className="text-[12px] text-[#666]">{account.email} · {account.organisation}</p></div><div className="flex items-center gap-3"><span className="text-[12px] text-[#8a90a0]">{account.rank}</span><SecondaryButton disabled={account.id === user.id || saving} onClick={() => setDeleteTarget(account)} className="text-[#b42318] hover:bg-[#fff5f5]"><Trash2 className="h-3.5 w-3.5" />Delete</SecondaryButton></div></div>)}{!users.length ? <p className="py-5 text-[12px] text-[#8a90a0]">No accounts to show.</p> : null}</div></Panel><div className="grid gap-5 xl:grid-cols-2"><Panel title="Departments" description="These options are used in the Add and Manage Member popups."><div className="flex gap-2"><input className={inputClass} value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="New department" /><PrimaryButton disabled={saving} onClick={() => add("departments")}><Plus className="h-3.5 w-3.5" />Add</PrimaryButton></div><OptionList values={settings.departments} onRemove={(value) => remove("departments", value)} /></Panel><Panel title="Ranks" description="Every configured rank is available in the member rank dropdown."><div className="flex gap-2"><input className={inputClass} value={rank} onChange={(event) => setRank(event.target.value)} placeholder="New rank" /><PrimaryButton disabled={saving} onClick={() => add("ranks")}><Plus className="h-3.5 w-3.5" />Add</PrimaryButton></div><OptionList values={settings.ranks} onRemove={(value) => remove("ranks", value)} /></Panel></div><CreateUserModal open={open} user={user} settings={settings} onClose={() => setOpen(false)} onCreated={(account) => { setUsers((current) => [...current, account].sort((a, b) => a.name.localeCompare(b.name))); setOpen(false); }} /><AppPopupWindow open={Boolean(deleteTarget)} onOpenChange={(value) => !value && setDeleteTarget(null)} title="Delete Software Account" description="This permanently removes the selected Internal Affairs login account." footer={<><SecondaryButton onClick={() => setDeleteTarget(null)}>Cancel</SecondaryButton><PrimaryButton disabled={saving} onClick={() => void deleteAccount()} className="bg-[#b42318] hover:bg-[#8f1c13]"><Trash2 className="h-3.5 w-3.5" />Delete Account</PrimaryButton></>}><div className="space-y-3 p-6"><p className="text-[13px] text-[#4d5568]">Delete <strong>{deleteTarget?.name}</strong> ({deleteTarget?.email})?</p><p className="text-[12px] text-[#8a90a0]">Their previous activity will remain in the audit log.</p></div></AppPopupWindow></div>;
 }
 
 function OptionList({ values, onRemove }: { values: string[]; onRemove: (value: string) => void }) { return <div className="mt-4 flex flex-wrap gap-2">{values.map((value) => <span key={value} className="inline-flex items-center gap-1 rounded-[5px] bg-[#f0f1f3] px-2 py-1 text-[12px] text-[#4d5568]">{value}<button type="button" onClick={() => onRemove(value)} className="rounded p-0.5 hover:bg-white" aria-label={`Remove ${value}`}><X className="h-3 w-3" /></button></span>)}</div>; }
@@ -1793,14 +1557,14 @@ function CreateUserModal({ open, user, settings, onClose, onCreated }: { open: b
   return <AppPopupWindow open={open} onOpenChange={(value) => !value && onClose()} title="Create User" description="Create an Internal Affairs software account. Public sign-up is not available." footer={<><SecondaryButton onClick={onClose}>Cancel</SecondaryButton><PrimaryButton disabled={saving} onClick={submit}>{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserPlus className="h-3.5 w-3.5" />}Create User</PrimaryButton></>}><div className="grid gap-4 p-6 sm:grid-cols-2"><div><label className={labelClass}>Name</label><input className={inputClass} value={form.name} onChange={(event) => update("name", event.target.value)} /></div><div><label className={labelClass}>Email</label><input className={inputClass} type="email" value={form.email} onChange={(event) => update("email", event.target.value)} /></div><div><label className={labelClass}>Password</label><input className={inputClass} type="text" autoComplete="new-password" value={form.password} onChange={(event) => update("password", event.target.value)} /><p className="mt-1 text-[11px] text-[#8a90a0]">At least 12 characters.</p></div><div><label className={labelClass}>Organisation</label><AppSelect value={form.organisation} onChange={(value) => update("organisation", value)} options={organisations.map((value) => ({ value, label: value }))} /></div><div><label className={labelClass}>Rank</label><input className={inputClass} value={form.rank} onChange={(event) => update("rank", event.target.value)} placeholder="Enter rank" /></div></div></AppPopupWindow>;
 }
 
-function MemberFormModal({ state, settings, onClose, onSaved }: { state: { open: boolean; mode: "create" | "edit" | "rehire"; member?: IaMember }; settings: IaSettings | null; onClose: () => void; onSaved: () => Promise<void> }) {
+function MemberFormModal({ state, settings, onClose, onSaved }: { state: { open: boolean; mode: "create" | "edit" | "rehire"; member?: IaMember }; settings: IaSettings | null; onClose: () => void; onSaved: (member: IaMember, mode: "create" | "edit" | "rehire") => void }) {
   const [form, setForm] = useState<MemberInput>(emptyMemberInput()); const [saving, setSaving] = useState(false);
   useEffect(() => { if (!state.open) return; const member = state.member; setForm(member ? { name: member.name, passportNumber: member.passportNumber, discordUsername: member.discordUsername, rank: member.rank, primaryDepartment: member.primaryDepartment, secondaryDepartment: member.secondaryDepartment, joiningDate: member.joiningDate, logsAssigned: member.logsAssigned, badgeNumberAssigned: member.badgeNumberAssigned, discordRoles: member.discordRoles, hiringRecord: member.hiringRecord } : emptyMemberInput()); }, [state.open, state.member]);
   useEffect(() => { if (state.open && state.member) setForm((current) => ({ ...current, badgeNumber: state.member?.badgeNumber || "" })); }, [state.open, state.member]);
   const set = <K extends keyof MemberInput>(key: K, value: MemberInput[K]) => setForm((current) => ({ ...current, [key]: value }));
-  const submit = async () => { setSaving(true); try { if (state.mode === "edit" && state.member) await iaApi.updateMember(state.member.id, form); else if (state.mode === "rehire" && state.member) await iaApi.rehireMember(state.member.id, form); else await iaApi.createMember(form); notify({ title: state.mode === "rehire" ? "Member rehired successfully" : state.mode === "edit" ? "Member record updated" : "Member added successfully", variant: "success" }); await onSaved(); } catch (error) { notify({ title: "Could not save member", description: error instanceof Error ? error.message : "Please try again.", variant: "error" }); } finally { setSaving(false); } };
+  const submit = async () => { setSaving(true); try { const savedMember = state.mode === "edit" && state.member ? await iaApi.updateMember(state.member.id, form) : state.mode === "rehire" && state.member ? await iaApi.rehireMember(state.member.id, form) : await iaApi.createMember(form); notify({ title: state.mode === "rehire" ? "Member rehired successfully" : state.mode === "edit" ? "Member record updated" : "Member added successfully", variant: "success" }); onSaved(savedMember, state.mode); } catch (error) { notify({ title: "Could not save member", description: error instanceof Error ? error.message : "Please try again.", variant: "error" }); } finally { setSaving(false); } };
   const title = state.mode === "create" ? "Add Member" : state.mode === "rehire" ? "Rehire Member" : "Manage Member";
-  return <AppPopupWindow open={state.open} onOpenChange={(value) => !value && onClose()} title={title} description={state.mode === "rehire" ? "Archived details are pre-filled. Saving moves this member back to the current Members list." : "Name, Passport Number, and Rank are required."} className="max-w-[800px]" bodyClassName="overflow-y-auto" footer={<><SecondaryButton onClick={onClose}>Cancel</SecondaryButton><PrimaryButton disabled={saving} onClick={submit}>{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}{state.mode === "rehire" ? "Rehire Member" : "Save Member"}</PrimaryButton></>}><div className="grid gap-x-4 gap-y-4 p-6 sm:grid-cols-2"><div><label className={labelClass}>Name <span className="text-[#b42318]">*</span></label><input className={inputClass} value={form.name} onChange={(event) => set("name", event.target.value)} /></div><div><label className={labelClass}>Passport Number <span className="text-[#b42318]">*</span></label><input className={inputClass} value={form.passportNumber} onChange={(event) => set("passportNumber", event.target.value)} /></div><div><label className={labelClass}>Badge Number</label><input className={inputClass} value={form.badgeNumber || ""} onChange={(event) => set("badgeNumber", event.target.value)} /></div><div><label className={labelClass}>Discord Username</label><div className="flex gap-2"><input className={inputClass} value={form.discordUsername} onChange={(event) => set("discordUsername", event.target.value)} />{form.discordUsername ? <SecondaryButton onClick={() => copyMessage(form.discordUsername, "Discord username")}><Copy className="h-3.5 w-3.5" /></SecondaryButton> : null}</div></div><div><label className={labelClass}>Rank <span className="text-[#b42318]">*</span></label><AppSelect value={form.rank} onChange={(value) => set("rank", value)} options={[{ value: "", label: "Select rank" }, ...(settings?.ranks || []).map((value) => ({ value, label: value }))]} /></div><div><label className={labelClass}>Primary Department</label><AppSelect value={form.primaryDepartment} onChange={(value) => set("primaryDepartment", value)} options={[{ value: "", label: "Select department" }, ...(settings?.departments || []).map((value) => ({ value, label: value }))]} /></div><div><label className={labelClass}>Secondary Department</label><AppSelect value={form.secondaryDepartment} onChange={(value) => set("secondaryDepartment", value)} options={[{ value: "", label: "Select department" }, ...(settings?.departments || []).map((value) => ({ value, label: value }))]} /></div><div><label className={labelClass}>Joining Date</label><AppDatePicker value={form.joiningDate} onChange={(value) => set("joiningDate", value.slice(0, 10))} placeholder="Select joining date" /></div><div className="flex flex-col justify-end gap-2"><Toggle checked={form.logsAssigned} onChange={(value) => set("logsAssigned", value)} label="Logs Assigned" /><Toggle checked={form.badgeNumberAssigned} onChange={(value) => set("badgeNumberAssigned", value)} label="Badge Number Assigned" /><Toggle checked={form.discordRoles} onChange={(value) => set("discordRoles", value)} label="Discord Roles" /><Toggle checked={form.hiringRecord} onChange={(value) => set("hiringRecord", value)} label="Hiring Record" /></div></div></AppPopupWindow>;
+  return <AppPopupWindow open={state.open} onOpenChange={(value) => !value && onClose()} title={title} description={state.mode === "rehire" ? "Archived details are pre-filled. Saving moves this member back to the current Members list." : "Name, Passport Number, and Rank are required."} className="max-w-[800px]" bodyClassName="overflow-y-auto" footer={<><SecondaryButton onClick={onClose}>Cancel</SecondaryButton><PrimaryButton disabled={saving} onClick={submit}>{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}{state.mode === "rehire" ? "Rehire Member" : "Save Member"}</PrimaryButton></>}><div className="grid gap-x-4 gap-y-4 p-6 sm:grid-cols-2" onKeyDown={(event) => { if (event.ctrlKey && event.key === "Enter" && !saving) { event.preventDefault(); void submit(); } }}><div><label className={labelClass}>Name <span className="text-[#b42318]">*</span></label><input className={inputClass} value={form.name} onChange={(event) => set("name", event.target.value)} /></div><div><label className={labelClass}>Passport Number <span className="text-[#b42318]">*</span></label><input className={inputClass} value={form.passportNumber} onChange={(event) => set("passportNumber", event.target.value)} /></div><div><label className={labelClass}>Badge Number</label><input className={inputClass} value={form.badgeNumber || ""} onChange={(event) => set("badgeNumber", event.target.value)} /></div><div><label className={labelClass}>Discord Username</label><div className="flex gap-2"><input className={inputClass} value={form.discordUsername} onChange={(event) => set("discordUsername", event.target.value)} />{form.discordUsername ? <SecondaryButton onClick={() => copyMessage(form.discordUsername, "Discord username")}><Copy className="h-3.5 w-3.5" /></SecondaryButton> : null}</div></div><div><label className={labelClass}>Rank <span className="text-[#b42318]">*</span></label><AppSelect value={form.rank} onChange={(value) => set("rank", value)} options={[{ value: "", label: "Select rank" }, ...(settings?.ranks || []).map((value) => ({ value, label: value }))]} /></div><div><label className={labelClass}>Primary Department</label><AppSelect value={form.primaryDepartment} onChange={(value) => set("primaryDepartment", value)} options={[{ value: "", label: "Select department" }, ...(settings?.departments || []).map((value) => ({ value, label: value }))]} /></div><div><label className={labelClass}>Secondary Department</label><AppSelect value={form.secondaryDepartment} onChange={(value) => set("secondaryDepartment", value)} options={[{ value: "", label: "Select department" }, ...(settings?.departments || []).map((value) => ({ value, label: value }))]} /></div><div><label className={labelClass}>Joining Date</label><AppDatePicker value={form.joiningDate} onChange={(value) => set("joiningDate", value.slice(0, 10))} placeholder="Select joining date" /></div><div className="flex flex-col justify-end gap-2"><Toggle checked={form.logsAssigned} onChange={(value) => set("logsAssigned", value)} label="Logs Assigned" /><Toggle checked={form.badgeNumberAssigned} onChange={(value) => set("badgeNumberAssigned", value)} label="Badge Number Assigned" /><Toggle checked={form.discordRoles} onChange={(value) => set("discordRoles", value)} label="Discord Roles" /><Toggle checked={form.hiringRecord} onChange={(value) => set("hiringRecord", value)} label="Hiring Record" /></div></div></AppPopupWindow>;
 }
 
 function MemberProfileModal({ member, user, settings, onClose, onEdit, onRefresh }: { member: IaMember | null; user: IaUser; settings: IaSettings | null; onClose: () => void; onEdit: () => void; onRefresh: () => Promise<void> }) {
@@ -1820,11 +1584,13 @@ function MembersView({ members, settings, user, onOpen, onEdit, onRefresh }: { m
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("");
   const [rank, setRank] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [confirm, setConfirm] = useState<{ kind: "delete" | "fire"; member: IaMember } | null>(null);
   const [fireReason, setFireReason] = useState("");
   const [rankChange, setRankChange] = useState<{ member: IaMember; newRank: string } | null>(null);
-  const [utilityOpen, setUtilityOpen] = useState<"logs" | "hiring" | "roles" | null>(null);
+  const [utilityOpen, setUtilityOpen] = useState<"logs" | "hiring" | "roles" | "department" | null>(null);
 
   const filtered = useMemo(
     () => members.filter((member) =>
@@ -1834,9 +1600,21 @@ function MembersView({ members, settings, user, onOpen, onEdit, onRefresh }: { m
     ),
     [members, search, department, rank],
   );
+  const hasFilters = Boolean(search.trim() || department || rank);
   const pages = Math.max(1, Math.ceil(filtered.length / 20));
   const visible = filtered.slice((page - 1) * 20, page * 20);
   useEffect(() => setPage(1), [search, department, rank]);
+  useEffect(() => setSelectedMemberId(filtered[0]?.id || null), [filtered]);
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key.toLowerCase() === "h") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
 
   const runDeleteOrFire = async () => {
     if (!confirm) return;
@@ -1859,26 +1637,30 @@ function MembersView({ members, settings, user, onOpen, onEdit, onRefresh }: { m
     }
   };
 
-  const missingLogs = members.filter((member) => !member.logsAssigned);
   const missingHiring = members.filter((member) => !member.hiringRecord);
   const missingRoles = members.filter((member) => !member.discordRoles);
+  const missingLogs = members.filter((member) => isRankFiveOrHigher(member.rank) && !member.logsAssigned);
+  const missingDepartment = members.filter((member) => isRankFiveOrHigher(member.rank) && !member.primaryDepartment.trim() && !member.secondaryDepartment.trim());
 
   return <>
     <div className="space-y-5">
-      <Panel title={`Members (${members.length})`} description="Search the current organisation roster. Filters are limited to Department and Rank." action={<div className="flex flex-wrap gap-2"><SecondaryButton onClick={() => setUtilityOpen("logs")}>Missing Logs ({missingLogs.length})</SecondaryButton><SecondaryButton onClick={() => setUtilityOpen("hiring")}>Missing Hiring Logs ({missingHiring.length})</SecondaryButton><SecondaryButton onClick={() => setUtilityOpen("roles")}>Missing Roles ({missingRoles.length})</SecondaryButton></div>}>
+      <Panel title={`Members (${members.length})`} description="Search the current organisation roster. Filters are limited to Department and Rank." action={<div className="flex flex-wrap gap-2"><SecondaryButton onClick={() => setUtilityOpen("logs")}>Missing Logs ({missingLogs.length})</SecondaryButton><SecondaryButton onClick={() => setUtilityOpen("hiring")}>Missing Hiring Logs ({missingHiring.length})</SecondaryButton><SecondaryButton onClick={() => setUtilityOpen("roles")}>Missing Roles ({missingRoles.length})</SecondaryButton><SecondaryButton onClick={() => setUtilityOpen("department")}>No Department ({missingDepartment.length})</SecondaryButton></div>}>
         <div className="mb-4 flex flex-col gap-2 lg:flex-row">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-[#9aa1b0]" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] outline-none focus:border-[#000]" placeholder="Search name, passport number, or Discord username" />
+            <input ref={searchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => { if (event.key !== "Enter") return; const firstResult = filtered[0]; if (!firstResult) return; event.preventDefault(); onEdit(firstResult); }} className="h-9 w-full rounded-[6px] border border-[#e2e5ec] bg-white pl-9 pr-3 text-[13px] outline-none focus:border-[#000]" placeholder="Search name, passport number, or Discord username" title="Press Ctrl+H to focus search" />
           </div>
           <AppSelect value={department} onChange={setDepartment} options={[{ value: "", label: "All departments" }, ...(settings?.departments || []).map((value) => ({ value, label: value }))]} className="lg:w-[190px]" />
           <AppSelect value={rank} onChange={setRank} options={[{ value: "", label: "All ranks" }, ...(settings?.ranks || []).map((value) => ({ value, label: value }))]} className="lg:w-[190px]" />
         </div>
+        <p aria-live="polite" className="mb-4 text-[12px] text-[#666]">
+          Showing {filtered.length} {filtered.length === 1 ? "result" : "results"}{hasFilters ? ` of ${members.length}` : ""}
+        </p>
         <div className="min-w-0 overflow-hidden rounded-[6px] border border-[#e2e5ec] text-[13px]">
           <div className="hidden grid-cols-[minmax(0,1.35fr)_minmax(0,1.1fr)_120px_minmax(0,1fr)_110px_100px] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid">
             <span>Name</span><span>Rank</span><span>Badge Number</span><span>Primary Department</span><span className="block text-center">Manage</span><span className="block text-center">Actions</span>
           </div>
-          {visible.map((member) => <div key={member.id} className="grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1.1fr)_120px_minmax(0,1fr)_110px_100px] lg:items-center lg:gap-y-0">
+          {visible.map((member) => <div key={member.id} className={cn("grid min-w-0 gap-x-4 gap-y-3 border-b border-[#f0f1f3] px-3 py-4 last:border-b-0 hover:bg-[#fafbfc] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1.1fr)_120px_minmax(0,1fr)_110px_100px] lg:items-center lg:gap-y-0", member.id === selectedMemberId && "bg-[#f7f8fb]")}>
             <div className="min-w-0 sm:col-span-2 lg:col-span-1"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Member</span><button type="button" onClick={() => onOpen(member)} className="max-w-full text-left font-medium hover:underline">{member.name}<span className="mt-0.5 block text-[11px] font-normal text-[#8a90a0]">{member.passportNumber}</span></button></div>
             <div className="min-w-0"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Rank</span><AppSelect className="w-full" value={member.rank} onChange={(newRank) => { if (newRank !== member.rank) setRankChange({ member, newRank }); }} options={(settings?.ranks || [member.rank]).map((value) => ({ value, label: value }))} /></div>
             <div className="min-w-0"><span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:hidden">Badge Number</span><p className="truncate text-[#4d5568]">{member.badgeNumber || "-"}</p></div>
@@ -1893,6 +1675,7 @@ function MembersView({ members, settings, user, onOpen, onEdit, onRefresh }: { m
       <UtilityPopup kind="logs" open={utilityOpen === "logs"} members={missingLogs} user={user} onClose={() => setUtilityOpen(null)} />
       <UtilityPopup kind="hiring" open={utilityOpen === "hiring"} members={missingHiring} user={user} onClose={() => setUtilityOpen(null)} />
       <UtilityPopup kind="roles" open={utilityOpen === "roles"} members={missingRoles} user={user} onClose={() => setUtilityOpen(null)} />
+      <UtilityPopup kind="department" open={utilityOpen === "department"} members={missingDepartment} user={user} onClose={() => setUtilityOpen(null)} />
     </div>
     <AppPopupWindow open={Boolean(confirm)} onOpenChange={(open) => !open && setConfirm(null)} title={confirm?.kind === "fire" ? "Fire Member" : "Delete Member"} description={confirm?.kind === "fire" ? "This moves the member to Archives and preserves their record for rehire." : "This permanently removes the member from the database."} footer={<><SecondaryButton onClick={() => setConfirm(null)}>Cancel</SecondaryButton><PrimaryButton onClick={runDeleteOrFire} className="bg-[#b42318] hover:bg-[#8f1c13]">{confirm?.kind === "fire" ? "Fire Member" : "Delete Member"}</PrimaryButton></>}>
       <div className="p-6">{confirm?.kind === "fire" ? <div className="grid items-start gap-4 lg:grid-cols-2"><div className="space-y-4"><div className="rounded-[7px] bg-[#f7f8fb] p-3 text-[13px]"><strong>{confirm.member.name}</strong> — {confirm.member.passportNumber}</div><div><label className={labelClass}>Reason <span className="text-[#b42318]">*</span></label><textarea className="min-h-[148px] w-full rounded-[6px] border border-[#e2e5ec] p-3 text-[13px] outline-none focus:border-[#000]" value={fireReason} onChange={(event) => setFireReason(event.target.value)} /></div></div><DiscordPreview value={firingTemplate(confirm.member, user, fireReason)} /></div> : <p className="text-[13px] text-[#4d5568]">Delete {confirm?.member.name}'s record?</p>}</div>

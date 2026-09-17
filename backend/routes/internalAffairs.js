@@ -143,6 +143,38 @@ function memberPayload(body) {
   };
 }
 
+function memberSnapshot(member) {
+  const source = member?.toObject ? member.toObject() : member;
+  return {
+    name: source.name,
+    passportNumber: source.passportNumber,
+    badgeNumber: source.badgeNumber || "",
+    discordUsername: source.discordUsername || "",
+    rank: source.rank,
+    primaryDepartment: source.primaryDepartment || "",
+    secondaryDepartment: source.secondaryDepartment || "",
+    joiningDate: source.joiningDate || "",
+    logsAssigned: Boolean(source.logsAssigned),
+    badgeNumberAssigned: Boolean(source.badgeNumberAssigned),
+    discordRoles: Boolean(source.discordRoles),
+    hiringRecord: Boolean(source.hiringRecord),
+    status: source.status || "active",
+    leftDate: source.leftDate || "",
+    leftReason: source.leftReason || "",
+    rolesRemoved: Boolean(source.rolesRemoved),
+    strikes: (source.strikes || []).map((strike) => ({ ...strike })),
+    loas: (source.loas || []).map((loa) => ({ ...loa })),
+  };
+}
+
+function sameMemberSnapshot(member, snapshot) {
+  return JSON.stringify(memberSnapshot(member)) === JSON.stringify(snapshot);
+}
+
+function restoreMember(member, snapshot) {
+  Object.assign(member, snapshot);
+}
+
 function validateMember(payload) {
   if (!payload.name || !payload.rank || !payload.passportNumber) {
     return "Name, passport number, and rank are required.";
@@ -226,7 +258,7 @@ router.patch("/settings", requireInternalAffairsAdmin, async (req, res, next) =>
     const changes = [];
     if (update.departments) changes.push(`Departments: ${previous.departments.join(", ") || "none"} → ${record.departments.join(", ") || "none"}`);
     if (update.ranks) changes.push(`Ranks: ${previous.ranks.join(", ") || "none"} → ${record.ranks.join(", ") || "none"}`);
-    await audit(models, req.iaUser, "SETTINGS_UPDATED", "settings", record, changes.join(" | ") || "No setting values changed.", { previous: { departments: previous.departments, ranks: previous.ranks }, next: { departments: record.departments, ranks: record.ranks } });
+    await audit(models, req.iaUser, "SETTINGS_UPDATED", "settings", record, changes.join(" | ") || "No setting values changed.", { previous: { departments: previous.departments, ranks: previous.ranks }, next: { departments: record.departments, ranks: record.ranks }, undo: { type: "settings", before: { departments: previous.departments, ranks: previous.ranks }, after: { departments: record.departments, ranks: record.ranks } } });
     res.json(serialize(record));
   } catch (error) {
     next(error);
@@ -260,6 +292,23 @@ router.post("/admin/users", requireInternalAffairsAdmin, async (req, res, next) 
     const user = await IaUser.create({ name, email, password: await bcrypt.hash(password, 12), organisation, rank });
     await audit({ AuditLog }, req.iaUser, "SOFTWARE_USER_CREATED", "user", user, `Created Internal Affairs account for ${name}.`);
     res.status(201).json(serializeUser(user));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/admin/users/:id", requireInternalAffairsAdmin, async (req, res, next) => {
+  try {
+    const models = await getInternalAffairsModels();
+    if (String(req.iaUser._id) === String(req.params.id)) return res.status(400).json({ message: "You cannot delete your own account." });
+    const user = await models.IaUser.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "Software account not found." });
+    if (user.isAdmin && await models.IaUser.countDocuments({ isAdmin: true }) <= 1) {
+      return res.status(409).json({ message: "The last administrator account cannot be deleted." });
+    }
+    await models.IaUser.deleteOne({ _id: user._id });
+    await audit(models, req.iaUser, "SOFTWARE_USER_DELETED", "user", user, `Deleted Internal Affairs account for ${user.name}.`);
+    res.json({ message: "Software account deleted." });
   } catch (error) {
     next(error);
   }
@@ -303,7 +352,7 @@ router.post("/members", async (req, res, next) => {
     }
     if (existing) return res.status(409).json({ message: "A current member already uses that passport number." });
     const member = await models.Member.create(payload);
-    await audit(models, req.iaUser, "MEMBER_CREATED", "member", member, `Created member record for ${member.name}.`);
+    await audit(models, req.iaUser, "MEMBER_CREATED", "member", member, `Created member record for ${member.name}.`, { undo: { type: "member", after: memberSnapshot(member) } });
     res.status(201).json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -318,14 +367,16 @@ router.patch("/members/:id", async (req, res, next) => {
     const payload = memberPayload({ ...member.toObject(), ...req.body });
     const invalid = validateMember(payload);
     if (invalid) return res.status(400).json({ message: invalid });
-    const passportOwner = await models.Member.findOne({ passportNumber: payload.passportNumber, _id: { $ne: member._id } });
-    if (passportOwner) return res.status(409).json({ message: "That passport number is already in use." });
+    if (payload.passportNumber !== member.passportNumber) {
+      const passportOwner = await models.Member.findOne({ passportNumber: payload.passportNumber, _id: { $ne: member._id } });
+      if (passportOwner) return res.status(409).json({ message: "That passport number is already in use." });
+    }
     const before = member.toObject();
     Object.assign(member, payload);
     await member.save();
     const fields = ["name", "passportNumber", "badgeNumber", "discordUsername", "rank", "primaryDepartment", "secondaryDepartment", "joiningDate", "logsAssigned", "badgeNumberAssigned", "discordRoles", "hiringRecord"];
     const changes = changedFields(before, member, fields).map((field) => `${field}: ${before[field] || "none"} → ${member[field] || "none"}`);
-    await audit(models, req.iaUser, "MEMBER_UPDATED", "member", member, changes.length ? `Updated ${member.name}: ${changes.join("; ")}.` : `Saved ${member.name} with no field changes.` , { changes });
+    await audit(models, req.iaUser, "MEMBER_UPDATED", "member", member, changes.length ? `Updated ${member.name}: ${changes.join("; ")}.` : `Saved ${member.name} with no field changes.` , { changes, undo: { type: "member", before: memberSnapshot(before), after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -338,7 +389,7 @@ router.delete("/members/:id", async (req, res, next) => {
     const member = await findMemberOr404(models, req.params.id, res);
     if (!member) return;
     await models.Member.deleteOne({ _id: member._id });
-    await audit(models, req.iaUser, "MEMBER_DELETED", "member", member, `Permanently deleted member record for ${member.name}.`);
+    await audit(models, req.iaUser, "MEMBER_DELETED", "member", member, `Permanently deleted member record for ${member.name}.`, { undo: { type: "member", before: memberSnapshot(member) } });
     res.json({ message: "Member deleted." });
   } catch (error) {
     next(error);
@@ -352,12 +403,13 @@ router.post("/members/:id/fire", async (req, res, next) => {
     if (!member) return;
     const reason = clean(req.body.reason);
     if (!reason) return res.status(400).json({ message: "A firing reason is required." });
+    const before = memberSnapshot(member);
     member.status = "archived";
     member.leftDate = londonDate();
     member.leftReason = reason;
     member.rolesRemoved = false;
     await member.save();
-    await audit(models, req.iaUser, "MEMBER_FIRED", "member", member, `Moved ${member.name} to Archives.`, { reason });
+    await audit(models, req.iaUser, "MEMBER_FIRED", "member", member, `Moved ${member.name} to Archives.`, { reason, undo: { type: "member", before, after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -372,9 +424,10 @@ router.post("/members/:id/rehire", async (req, res, next) => {
     const payload = memberPayload({ ...member.toObject(), ...req.body });
     const invalid = validateMember(payload);
     if (invalid) return res.status(400).json({ message: invalid });
+    const before = memberSnapshot(member);
     Object.assign(member, payload, { status: "active", leftDate: "", leftReason: "", rolesRemoved: false });
     await member.save();
-    await audit(models, req.iaUser, "MEMBER_REHIRED", "member", member, `Rehired ${member.name} from Archives.`);
+    await audit(models, req.iaUser, "MEMBER_REHIRED", "member", member, `Rehired ${member.name} from Archives.`, { undo: { type: "member", before, after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -389,10 +442,11 @@ router.post("/members/:id/rank-change", async (req, res, next) => {
     const newRank = clean(req.body.newRank);
     const reason = clean(req.body.reason);
     if (!newRank || !reason) return res.status(400).json({ message: "A new rank and reason are required." });
+    const before = memberSnapshot(member);
     const oldRank = member.rank;
     member.rank = newRank;
     await member.save();
-    await audit(models, req.iaUser, "RANK_CHANGED", "member", member, `${member.name}: ${oldRank} to ${newRank}.`, { oldRank, newRank, reason });
+    await audit(models, req.iaUser, "RANK_CHANGED", "member", member, `${member.name}: ${oldRank} to ${newRank}.`, { oldRank, newRank, reason, undo: { type: "member", before, after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -404,11 +458,12 @@ router.post("/members/:id/strikes", async (req, res, next) => {
     const models = await getInternalAffairsModels();
     const member = await findMemberOr404(models, req.params.id, res);
     if (!member) return;
+    const before = memberSnapshot(member);
     const reason = clean(req.body.reason);
     if (!reason) return res.status(400).json({ message: "A strike reason is required." });
     member.strikes.push({ reason, addedBy: req.iaUser.name });
     await member.save();
-    await audit(models, req.iaUser, "STRIKE_ADDED", "member", member, `Added a strike to ${member.name}.`, { reason });
+    await audit(models, req.iaUser, "STRIKE_ADDED", "member", member, `Added a strike to ${member.name}.`, { reason, undo: { type: "member", before, after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -420,6 +475,7 @@ router.post("/members/:id/loa", async (req, res, next) => {
     const models = await getInternalAffairsModels();
     const member = await findMemberOr404(models, req.params.id, res);
     if (!member) return;
+    const before = memberSnapshot(member);
     const startDate = clean(req.body.startDate);
     const endDate = clean(req.body.endDate);
     const reason = clean(req.body.reason);
@@ -427,7 +483,7 @@ router.post("/members/:id/loa", async (req, res, next) => {
     if (endDate < startDate) return res.status(400).json({ message: "The LOA end date must be on or after the start date." });
     member.loas.push({ startDate, endDate, reason, addedBy: req.iaUser.name });
     await member.save();
-    await audit(models, req.iaUser, "LOA_ADDED", "member", member, `Recorded LOA for ${member.name}.`, { startDate, endDate, reason });
+    await audit(models, req.iaUser, "LOA_ADDED", "member", member, `Recorded LOA for ${member.name}.`, { startDate, endDate, reason, undo: { type: "member", before, after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -439,10 +495,11 @@ router.post("/members/:id/roles-removed", async (req, res, next) => {
     const models = await getInternalAffairsModels();
     const member = await findMemberOr404(models, req.params.id, res);
     if (!member) return;
+    const before = memberSnapshot(member);
     member.rolesRemoved = true;
     member.discordRoles = false;
     await member.save();
-    await audit(models, req.iaUser, "ROLES_REMOVED", "member", member, `Marked organisation roles removed for ${member.name}.`);
+    await audit(models, req.iaUser, "ROLES_REMOVED", "member", member, `Marked organisation roles removed for ${member.name}.`, { undo: { type: "member", before, after: memberSnapshot(member) } });
     res.json(memberWithComputedState(member));
   } catch (error) {
     next(error);
@@ -653,6 +710,54 @@ router.get("/audit-logs", async (req, res, next) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
     const logs = await models.AuditLog.find().sort({ createdAt: -1 }).limit(limit);
     res.json(logs.map(serialize));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/audit-logs/:id/undo", requireInternalAffairsAdmin, async (req, res, next) => {
+  try {
+    const models = await getInternalAffairsModels();
+    const entry = await models.AuditLog.findById(req.params.id);
+    if (!entry) return res.status(404).json({ message: "Audit log entry not found." });
+    const undo = entry.metadata?.undo;
+    if (!undo) return res.status(409).json({ message: "This older audit entry does not contain enough saved state to undo safely." });
+    if (entry.action === "AUDIT_UNDO") return res.status(409).json({ message: "An undo action cannot be undone." });
+
+    if (undo.type === "settings") {
+      const record = await models.Settings.findOne({ key: "organisation" });
+      if (!record) return res.status(404).json({ message: "Organisation settings not found." });
+      if (JSON.stringify({ departments: record.departments, ranks: record.ranks }) !== JSON.stringify(undo.after)) {
+        return res.status(409).json({ message: "These settings have changed since this log. Undo the newer change first." });
+      }
+      record.departments = undo.before.departments;
+      record.ranks = undo.before.ranks;
+      await record.save();
+      await audit(models, req.iaUser, "AUDIT_UNDO", "settings", record, `Undid audit entry ${entry.action}.`, { undoneAuditId: String(entry._id), targetAction: entry.action });
+      return res.json(serialize(record));
+    }
+
+    if (undo.type !== "member") return res.status(409).json({ message: "This audit entry cannot be undone safely yet." });
+    const current = await models.Member.findById(entry.entityId);
+    if (entry.action === "MEMBER_DELETED") {
+      if (current) return res.status(409).json({ message: "This member already exists. Undo was stopped to avoid overwriting newer data." });
+      const restored = await models.Member.create(undo.before);
+      await audit(models, req.iaUser, "AUDIT_UNDO", "member", restored, `Undid audit entry ${entry.action}.`, { undoneAuditId: String(entry._id), targetAction: entry.action });
+      return res.json(memberWithComputedState(restored));
+    }
+    if (!current) return res.status(404).json({ message: "The affected member no longer exists." });
+    if (!sameMemberSnapshot(current, undo.after)) {
+      return res.status(409).json({ message: "This member has changed since this log. Undo the newer change first." });
+    }
+    if (entry.action === "MEMBER_CREATED") {
+      await models.Member.deleteOne({ _id: current._id });
+      await audit(models, req.iaUser, "AUDIT_UNDO", "member", current, `Undid audit entry ${entry.action}.`, { undoneAuditId: String(entry._id), targetAction: entry.action });
+      return res.json({ message: "Member creation undone." });
+    }
+    restoreMember(current, undo.before);
+    await current.save();
+    await audit(models, req.iaUser, "AUDIT_UNDO", "member", current, `Undid audit entry ${entry.action}.`, { undoneAuditId: String(entry._id), targetAction: entry.action });
+    return res.json(memberWithComputedState(current));
   } catch (error) {
     next(error);
   }

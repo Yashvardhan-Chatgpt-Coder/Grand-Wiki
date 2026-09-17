@@ -107,6 +107,7 @@ export const iaApi = {
   },
   getUsers: () => request<IaUser[]>("/admin/users"),
   createUser: (input: { name: string; email: string; password: string; organisation: string; rank: string }) => request<IaUser>("/admin/users", { method: "POST", body: JSON.stringify(input) }),
+  deleteUser: (id: string) => request<{ message: string }>(`/admin/users/${id}`, { method: "DELETE" }),
   getMembers: (status: "active" | "archived", filters?: { search?: string; department?: string; rank?: string }) => {
     const query = new URLSearchParams({ status });
     if (filters?.search) query.set("search", filters.search);
@@ -136,6 +137,7 @@ export const iaApi = {
   saveBodycamCheck: (date: string, memberIds: string[]) => request<IaBodycamCheck>("/bodycam/checks", { method: "POST", body: JSON.stringify({ date, memberIds }) }),
   getDashboard: () => request<IaDashboard>("/dashboard"),
   getAuditLogs: () => request<IaAuditLog[]>("/audit-logs"),
+  undoAudit: (id: string) => request<{ message?: string }>(`/audit-logs/${id}/undo`, { method: "POST" }),
 };
 
 export function londonToday() {
