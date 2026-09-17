@@ -1200,7 +1200,7 @@ function CheckTable<T extends Record<string, boolean | null>>({
   onSet: (id: string, field: keyof T, value: boolean) => void;
 }) {
   return (
-    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-[6px] border border-[#e2e5ec] text-[13px]">
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-scroll rounded-[6px] border border-[#e2e5ec] text-[13px]" style={{ maxHeight: "min(520px, calc(90vh - 375px))" }}>
       <div className="hidden grid-cols-[minmax(0,1.5fr)_80px_repeat(4,90px)] items-center gap-x-4 border-b border-[#e2e5ec] bg-[#f7f8fb] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#8a90a0] lg:grid"><span>Member</span><span className="text-center">Include</span>{fields.map((field) => <span key={String(field.key)} className="text-center">{field.label}</span>)}</div>
       {members.map((member) => {
         const values = selected[member.id];
