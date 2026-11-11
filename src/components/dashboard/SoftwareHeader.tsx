@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { ProfileSettingsModal } from "./ProfileSettingsModal";
+import { IaProfileSettingsModal } from "@/components/internal-affairs/IaProfileSettingsModal";
 import { ComingSoonDialog } from "./ComingSoonDialog";
 import { DonateModal } from "./DonateModal";
 import { CreditsModal } from "./CreditsModal";
@@ -30,9 +31,9 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   authApi,
   clearStoredUser,
-  getStoredUser,
+  getUserInitials,
 } from "@/lib/api";
-import type { IaUser } from "@/lib/internal-affairs-api";
+import { iaSession, type IaUser } from "@/lib/internal-affairs-api";
 
 type SoftwareHeaderProps = {
   title: string;
@@ -214,30 +215,34 @@ export function SoftwareHeader({
   const isAdmin = !!getStoredAdminUser();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const isIaPage = path.startsWith("/internal-affairs");
-  const storedUser = getStoredUser();
-  const showLogout = isAdmin || isIaPage || !!storedUser;
 
   const [iaUser, setIaUser] = useState<IaUser | null>(() => {
+    if (!isIaPage) return null;
     try {
-      const raw = localStorage.getItem("internal_affairs_session");
-      return raw ? JSON.parse(raw)?.user || null : null;
+      return iaSession.get()?.user || null;
     } catch {
       return null;
     }
   });
 
   useEffect(() => {
-    const handleUserUpdate = () => {
+    if (!isIaPage) {
+      setIaUser(null);
+      return;
+    }
+    const update = () => {
       try {
-        const raw = localStorage.getItem("internal_affairs_session");
-        setIaUser(raw ? JSON.parse(raw)?.user || null : null);
+        setIaUser(iaSession.get()?.user || null);
       } catch {
         setIaUser(null);
       }
     };
-    window.addEventListener("ia:user-updated", handleUserUpdate);
-    return () => window.removeEventListener("ia:user-updated", handleUserUpdate);
-  }, []);
+    update();
+    window.addEventListener("ia:user-updated", update);
+    return () => window.removeEventListener("ia:user-updated", update);
+  }, [isIaPage]);
+
+  const [iaProfileModalOpen, setIaProfileModalOpen] = useState(false);
   
   const [notifOpen, setNotifOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -507,6 +512,20 @@ export function SoftwareHeader({
     );
   };
 
+  const handleIaLogout = () => {
+    iaSession.clear();
+    setIaUser(null);
+    queue.add(
+      {
+        title: "Log Out",
+        description: "You have been securely signed out of Internal Affairs.",
+        variant: "success",
+      },
+      { timeout: 3000 },
+    );
+    navigate({ to: "/internal-affairs" });
+  };
+
   const confirmLogout = () => {
     setLogoutConfirmOpen(false);
     void authApi
@@ -514,9 +533,6 @@ export function SoftwareHeader({
       .catch(() => null)
       .finally(() => {
         clearStoredUser();
-        if (isIaPage) {
-          localStorage.removeItem("internal_affairs_session");
-        }
         queue.add(
           {
             title: "Log Out",
@@ -525,11 +541,7 @@ export function SoftwareHeader({
           },
           { timeout: 3000 },
         );
-        if (isIaPage) {
-          navigate({ to: "/internal-affairs" });
-        } else {
-          navigate({ to: "/admin" });
-        }
+        navigate({ to: "/admin" });
       });
   };
 
@@ -992,21 +1004,25 @@ export function SoftwareHeader({
                       profileOpen && "border-[#000000] ring-2 ring-[#e8eef7]",
                     )}
                   >
-                    {!isAdmin && avatarUrl ? (
+                    {!isAdmin && !isIaPage && avatarUrl ? (
                       <img
                         src={optimizeCloudinaryUrl(avatarUrl, 80, 80)}
                         alt=""
                         className="h-full w-full object-cover"
                       />
-                    ) : isAdmin ? (
+                    ) : isAdmin && !isIaPage ? (
                       "AD"
+                    ) : isIaPage && iaUser?.name ? (
+                      getUserInitials(iaUser.name)
+                    ) : isIaPage ? (
+                      "IA"
                     ) : (
                       initials
                     )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  {isAdmin ? "Admin profile" : "Profile"}
+                  {isIaPage ? "IA Profile" : isAdmin ? "Admin profile" : "Profile"}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -1021,63 +1037,53 @@ export function SoftwareHeader({
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   className="absolute right-0 top-[40px] z-[110] flex w-[240px] flex-col rounded-[12px] border border-[#e2e5ec] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] overflow-hidden"
                 >
-                  {/* User Profile Info Card */}
-                  <div className="flex flex-col border-b border-[#f0f1f3] px-4 py-3 bg-[#f9fbfc]">
-                    <span className="text-[13px] font-bold text-[#000000] truncate">
-                      {iaUser ? iaUser.name : isAdmin ? "Admin Dashboard" : storedUser?.name || displayName}
-                    </span>
-                    {(iaUser?.email || storedUser?.email) && (
-                      <span className="text-[11px] text-[#6b7280] truncate mt-0.5">
-                        {iaUser?.email || storedUser?.email}
-                      </span>
-                    )}
-                    {iaUser && (
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                        <span className="rounded bg-zinc-200/80 px-1.5 py-0.5 font-semibold text-black">
-                          {iaUser.rank}
-                        </span>
-                        <span className="text-[10px] text-[#8a90a0]">
-                          {iaUser.organisation}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Menu Items */}
-                  <div className="flex flex-col p-1">
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setProfileOpen(false);
-                          navigate({ to: "/admin" });
-                        }}
-                        className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-medium text-[#4b5563] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]"
-                      >
-                        <Database className="h-4 w-4 shrink-0 text-[#9aa1b0]" />
-                        Admin Panel
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setProfileOpen(false);
-                        setProfileModalOpen(true);
-                      }}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-medium text-[#4b5563] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]"
-                    >
-                      <Settings className="h-4 w-4 shrink-0 text-[#9aa1b0]" />
-                      Settings
-                    </button>
-                  </div>
-
-                  {showLogout && (
+                  {isIaPage ? (
                     <>
+                      {/* IA User Profile Card */}
+                      <div className="flex flex-col border-b border-[#f0f1f3] px-4 py-3 bg-[#f9fbfc]">
+                        <span className="text-[13px] font-bold text-[#000000] truncate">
+                          {iaUser?.name || "IA Officer"}
+                        </span>
+                        {iaUser?.email && (
+                          <span className="text-[11px] text-[#6b7280] truncate mt-0.5">
+                            {iaUser.email}
+                          </span>
+                        )}
+                        {iaUser && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span className="rounded bg-zinc-200/80 px-1.5 py-0.5 font-semibold text-black">
+                              {iaUser.rank}
+                            </span>
+                            <span className="text-[10px] text-[#8a90a0]">
+                              {iaUser.organisation}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* IA Menu Items */}
+                      <div className="flex flex-col p-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileOpen(false);
+                            setIaProfileModalOpen(true);
+                          }}
+                          className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-medium text-[#4b5563] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]"
+                        >
+                          <Settings className="h-4 w-4 shrink-0 text-[#9aa1b0]" />
+                          Profile Settings
+                        </button>
+                      </div>
+
                       <div className="h-px bg-[#f0f1f3] mx-1" />
 
                       <div className="flex flex-col p-1">
                         <button
+                          type="button"
                           onClick={() => {
                             setProfileOpen(false);
-                            setLogoutConfirmOpen(true);
+                            handleIaLogout();
                           }}
                           className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-semibold text-[#dc2626] transition-colors hover:bg-rose-50 hover:text-[#dc2626]"
                         >
@@ -1085,6 +1091,63 @@ export function SoftwareHeader({
                           Log out
                         </button>
                       </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Normal Website User Profile Info Card - EXACT OLD SCENE */}
+                      <div className="flex flex-col border-b border-[#f0f1f3] px-4 py-3 bg-[#f9fbfc]">
+                        <span className="text-[13px] font-bold text-[#000000] truncate">
+                          {isAdmin ? "Admin Dashboard" : displayName}
+                        </span>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="flex flex-col p-1">
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProfileOpen(false);
+                              navigate({ to: "/admin" });
+                            }}
+                            className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-medium text-[#4b5563] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]"
+                          >
+                            <Database className="h-4 w-4 shrink-0 text-[#9aa1b0]" />
+                            Admin Panel
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileOpen(false);
+                            setProfileModalOpen(true);
+                          }}
+                          className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-medium text-[#4b5563] transition-colors hover:bg-[#f7f8fb] hover:text-[#000000]"
+                        >
+                          <Settings className="h-4 w-4 shrink-0 text-[#9aa1b0]" />
+                          Settings
+                        </button>
+                      </div>
+
+                      {isAdmin && (
+                        <>
+                          <div className="h-px bg-[#f0f1f3] mx-1" />
+
+                          <div className="flex flex-col p-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfileOpen(false);
+                                setLogoutConfirmOpen(true);
+                              }}
+                              className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-3 py-2 text-left text-[12px] font-semibold text-[#dc2626] transition-colors hover:bg-rose-50 hover:text-[#dc2626]"
+                            >
+                              <LogOut className="h-4 w-4 shrink-0 text-[#fca5a5]" />
+                              Log out
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
                 </motion.div>
@@ -1132,6 +1195,11 @@ export function SoftwareHeader({
         open={profileModalOpen}
         onOpenChange={setProfileModalOpen}
         isAdmin={isAdmin}
+      />
+      <IaProfileSettingsModal
+        open={iaProfileModalOpen}
+        onOpenChange={setIaProfileModalOpen}
+        isAdmin={Boolean(iaUser?.isAdmin)}
       />
       <ThemedConfirmDialog
         open={logoutConfirmOpen}
