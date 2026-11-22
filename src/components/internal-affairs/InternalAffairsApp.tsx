@@ -210,7 +210,7 @@ function InternalAffairsLogin({ onLogin }: { onLogin: (session: ReturnType<typeo
     catch (error) { notify({ title: "Sign-in failed", description: error instanceof Error ? error.message : "Please try again.", variant: "error" }); }
     finally { setLoading(false); }
   };
-  return <main className="flex h-screen w-screen overflow-hidden bg-white text-zinc-950 select-none">
+  return <main className="flex h-full w-full overflow-hidden bg-white text-zinc-950 select-none">
     <div className="flex w-full items-center justify-center px-6 py-10 lg:w-1/2">
       <form onSubmit={submit} className="w-full max-w-[400px]">
         <div className="mb-8">

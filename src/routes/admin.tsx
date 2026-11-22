@@ -136,7 +136,7 @@ function AdminLogin() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-white text-zinc-950 overflow-hidden select-none">
+    <div className="flex h-full w-full bg-white text-zinc-950 overflow-hidden select-none">
       {/* LEFT COLUMN - STRICT 50% WIDTH, FULL HEIGHT, CENTERING FORM */}
       <div className="flex w-full lg:w-1/2 h-full flex-col justify-center p-8 md:p-12 xl:p-16">
         {/* Form Area - perfectly centered inside remaining space, strictly non-scrollable */}

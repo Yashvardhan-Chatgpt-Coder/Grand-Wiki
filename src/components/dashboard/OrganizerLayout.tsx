@@ -29,9 +29,9 @@ export function OrganizerLayout({ header, children }: OrganizerLayoutProps) {
   }, [pageIndex]);
 
   return (
-    <div className="es-app-shell h-screen overflow-hidden bg-[#f7f8fb] text-[#000000]">
-      <div className="flex h-screen">
-        <div className="flex h-screen shrink-0 flex-col">
+    <div className="es-app-shell h-full overflow-hidden bg-[#f7f8fb] text-[#000000]">
+      <div className="flex h-full">
+        <div className="flex h-full shrink-0 flex-col">
           <SidebarBrand />
           <AppSidebar />
         </div>

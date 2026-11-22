@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { MyToastRegion } from "@/components/ui/Toast";
 import { getStoredUser, type ApiUser } from "@/lib/api";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { TopAnnouncementBar } from "@/components/dashboard/TopAnnouncementBar";
 
 const darkThemeOverrideCss = `
 html.dark body{background:#000000!important;color:#ffffff!important}
@@ -226,7 +227,12 @@ function RootComponent() {
       <OnboardingGuard pathname={location.pathname} />
       <ThemeClassManager pathname={location.pathname} />
       <DesktopOnlyGuard />
-      <Outlet />
+      <div className="flex h-screen w-screen flex-col overflow-hidden">
+        <TopAnnouncementBar />
+        <div className="min-h-0 flex-1 w-full overflow-hidden">
+          <Outlet />
+        </div>
+      </div>
       <MyToastRegion />
     </QueryClientProvider>
   );
