@@ -102,7 +102,7 @@ const DEPARTMENT_CATEGORIES: CommandCategory[] = [
         title: "10-15 Requesting State Lawyer",
         commands: [
           {
-            text: "LSPD to LAST: We have a 10-15 at DOC requesting state legal representation. Please check availability.",
+            text: "LSPD to LAST: We have a 10-15 at DOC requesting legal representation. Please check availability.",
           },
         ],
       },
@@ -305,7 +305,7 @@ const DEPARTMENT_CATEGORIES: CommandCategory[] = [
         title: "Gun Store Robbery",
         commands: [
           {
-            text: "LSPD to ALL: Active Global at Gun Store robbery. Armed suspects reported—maximum 10-32 units respond.",
+            text: "LSPD to ALL: Active Global at Gun Store robbery. Armed suspects reported.",
           },
           {
             text: "LSPD to ALL: Suspect demands at the store robbery have been received. Negative hostages on scene.",
@@ -360,6 +360,14 @@ const DEPARTMENT_CATEGORIES: CommandCategory[] = [
         commands: [
           {
             text: "LSPD to ALL: Global assigned to bank security. Establish a defensive perimeter and prevent hostile access.",
+          },
+        ],
+      },
+      {
+        title: "Fort Zancudo Raid",
+        commands: [
+          {
+            text: "LSPD to ALL: Requesting authorization to enter Fort Zancudo and secure the base.",
           },
         ],
       },
